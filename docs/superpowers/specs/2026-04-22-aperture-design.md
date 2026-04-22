@@ -53,11 +53,11 @@ class ApertureApp(App):
 
 Users can override individual Textual CSS variables in config (see below).
 
-### Layer 2: Log Syntax Highlighting — Pygments
+### Layer 2: Log Syntax Highlighting — Rich Theme
 
-Toolong uses Rich's `RegexHighlighter` with `repr.*` styles, and Rich delegates to Pygments for syntax highlighting. Pygments ships `GruvboxLightStyle` built-in.
+Toolong's `LogHighlighter` uses Rich's `RegexHighlighter`, which applies `repr.*` named styles (e.g., `repr.number`, `repr.bool_true`, `repr.str`) from Rich's theme system — not Pygments. These styles control colors for IPs, UUIDs, booleans, numbers, and strings within log lines.
 
-Aperture sets the default Pygments style to `gruvbox-light` and makes it configurable via a single config key accepting any valid Pygments style name.
+Aperture defines a custom Rich `Theme` mapping `repr.*` styles to gruvbox-light colors and passes it to the Textual app. This theme is bundled as the default and is not user-configurable in v1 (users who want to customize log syntax colors can modify the source or override via a future `[theme.syntax]` config section).
 
 ### Layer 3: ANSI-Colored Logs — terminal palette
 
@@ -67,15 +67,12 @@ Toolong sets `ansi_theme_dark = terminal_theme.DIMMED_MONOKAI`. Aperture defines
 
 ```toml
 [theme]
-# Pygments style for log syntax highlighting (any valid Pygments style name)
-syntax-style = "gruvbox-light"
-
 # Optional: override individual Textual CSS variables
 # accent = "#d65d0e"
 # background = "#fbf1c7"
 ```
 
-The config file is created at `~/.config/aperture/config.toml` on first run from a bundled default. Users who want full customization can override any Textual CSS variable; most users only need `syntax-style`.
+The config file is created at `~/.config/aperture/config.toml` on first run from a bundled default. The gruvbox-light Rich theme for log syntax highlighting is bundled and applied automatically — no config needed for the default experience.
 
 ---
 
