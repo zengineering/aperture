@@ -85,19 +85,33 @@ All bindings are centralized in `input/bindings.py` as named constants. Textual'
 | Key | Action |
 |-----|--------|
 | `j` / `k` | Scroll down / up |
-| `g g` | Jump to top |
+| `g` | Jump to top |
 | `G` | Jump to bottom |
 | `/` | Open search |
-| `n` / `p` | Next / previous search match |
+| `n` / `N` | Next / previous search match |
 | `Enter` | Open detail pane (default split from config) |
-| `h` | Open detail pane — horizontal split |
+| `s` | Open detail pane — horizontal split |
 | `v` | Open detail pane — vertical split |
 | `f` | Open detail pane — floating |
 | `m` | Toggle mouse capture |
 | `?` | Open keybinding help screen |
 | `q` | Quit |
 
-Toolong's existing bindings that don't conflict are preserved.
+### Conflict Resolution
+
+Toolong's existing bindings were audited against all proposed keys (`log_lines.py`, `log_view.py`, `find_dialog.py`). Resolutions:
+
+| Key | Toolong binding | Resolution |
+|-----|----------------|------------|
+| `j` / `k` | scroll_down / scroll_up | Compatible — same action, retained as-is |
+| `/` | show_find_dialog | Compatible — same action, retained as-is |
+| `Enter` | select (open detail) | Compatible — same action, retained as-is |
+| `g` | scroll_end (**bottom**) | **Override** — toolong has g/G inverted from vim convention; Aperture corrects to vim standard (g=top, G=bottom) |
+| `G` | scroll_home (**top**) | **Override** — same inversion; Aperture corrects to vim standard |
+| `s` | scroll_down alias | **Remove** toolong's `s` alias; `j` and arrow keys remain for scrolling |
+| `m` | navigate forward by minute | **Remove** toolong's `m`/`M` minute-navigation bindings; mouse toggle takes precedence |
+| `n` / `N` | unbound | No conflict |
+| `v` / `f` / `?` / `q` | unbound | No conflict |
 
 ### Help Screen
 
@@ -118,11 +132,11 @@ help        = "?"
 
 ## Pane System
 
-The `panes/` module wraps toolong's existing `LinePanel` with three layout modes for the detail view:
+The `panes/` module wraps toolong's existing `LinePanel` (`src/toolong/line_panel.py:57`) with three layout modes for the detail view. `LinePanel` extends `ScrollableContainer` and uses only standard Textual APIs (`self.app.batch_update()`, `self.query()`, `self.mount()`) with no coupling to a specific parent widget — it can be placed in any container without modification.
 
 | Mode | Layout | Key |
 |------|--------|-----|
-| `horizontal` | Detail pane below log view | `h` |
+| `horizontal` | Detail pane below log view | `s` |
 | `vertical` | Detail pane beside log view (toolong default) | `v` |
 | `floating` | Centered modal overlay, dismiss with `Escape`/`q` | `f` |
 
@@ -149,6 +163,60 @@ Textual captures mouse events by default. Aperture adds a toggle (`m`) that call
 A footer indicator shows current state (e.g., `[MOUSE OFF]`).
 
 This is a minimal implementation in `ui.py` — no new module needed.
+
+---
+
+## Complete Configuration Reference
+
+The full `~/.config/aperture/config.toml` with all available options and defaults:
+
+```toml
+# Aperture Configuration
+# Location: ~/.config/aperture/config.toml
+
+[theme]
+# Optional: override individual Textual CSS variables for UI chrome
+# accent = "#d65d0e"
+# background = "#fbf1c7"
+# foreground = "#282828"
+# panel_background = "#f9f5d9"
+# panel_foreground = "#282828"
+# border = "#d65d0e"
+# primary = "#d65d0e"
+# secondary = "#8ec07c"
+# warning = "#fabd2f"
+# error = "#fb4934"
+# success = "#b8bb26"
+# info = "#83a598"
+
+[keys]
+# Navigation
+scroll-down    = "j"      # Scroll down one line
+scroll-up      = "k"      # Scroll up one line
+jump-to-top    = "g"      # Jump to the top of the log
+jump-to-bottom = "G"      # Jump to the bottom of the log
+
+# Search
+search         = "/"      # Open search dialog
+next-match     = "n"      # Jump to next search match
+prev-match     = "N"      # Jump to previous search match
+
+# Pane management
+open-pane         = "enter"  # Open detail pane in default split mode
+horizontal-split  = "s"      # Open detail pane — horizontal split
+vertical-split    = "v"      # Open detail pane — vertical split
+floating-split    = "f"      # Open detail pane — floating modal
+
+# General
+mouse-toggle   = "m"      # Toggle mouse capture on/off
+help           = "?"      # Show keybinding help screen
+quit           = "q"      # Quit Aperture
+
+[panes]
+default-split = "horizontal"  # Default split mode: horizontal | vertical | floating
+```
+
+The gruvbox-light Rich theme (log syntax highlighting) and ANSI palette are bundled defaults — no config entries are needed or exposed for these in v1.
 
 ---
 
