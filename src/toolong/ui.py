@@ -4,6 +4,8 @@ import locale
 
 from pathlib import Path
 
+from toolong.config import load_config, ApertureConfig
+
 from rich import terminal_theme
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -117,6 +119,7 @@ class UI(App):
         self.save_merge = save_merge
         self.watcher = get_watcher()
         super().__init__()
+        self.aperture_config: ApertureConfig = load_config()
 
     async def on_mount(self) -> None:
         self.ansi_theme_dark = terminal_theme.DIMMED_MONOKAI
