@@ -118,8 +118,8 @@ class UI(App):
         self.merge = merge
         self.save_merge = save_merge
         self.watcher = get_watcher()
-        super().__init__()
         self._config_warning: str | None = None
+        super().__init__()
         try:
             self.aperture_config: ApertureConfig = load_config()
         except Exception as exc:
@@ -130,9 +130,9 @@ class UI(App):
         self.ansi_theme_dark = terminal_theme.DIMMED_MONOKAI
         await self.push_screen(LogScreen())
         self.screen.query("LogLines").focus()
-        self.watcher.start()
         if self._config_warning:
             self.notify(self._config_warning, severity="warning", timeout=8)
+        self.watcher.start()
 
     def on_unmount(self) -> None:
         self.watcher.close()
