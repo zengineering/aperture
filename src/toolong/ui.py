@@ -119,13 +119,20 @@ class UI(App):
         self.save_merge = save_merge
         self.watcher = get_watcher()
         super().__init__()
-        self.aperture_config: ApertureConfig = load_config()
+        self._config_warning: str | None = None
+        try:
+            self.aperture_config: ApertureConfig = load_config()
+        except Exception as exc:
+            self.aperture_config = ApertureConfig()
+            self._config_warning = f"Config error — using defaults. ({exc})"
 
     async def on_mount(self) -> None:
         self.ansi_theme_dark = terminal_theme.DIMMED_MONOKAI
         await self.push_screen(LogScreen())
         self.screen.query("LogLines").focus()
         self.watcher.start()
+        if self._config_warning:
+            self.notify(self._config_warning, severity="warning", timeout=8)
 
     def on_unmount(self) -> None:
         self.watcher.close()
