@@ -8,6 +8,8 @@ from toolong.config import load_config, ApertureConfig
 
 from rich import terminal_theme
 from textual.app import App, ComposeResult
+
+from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
 from textual.binding import Binding
 from textual.lazy import Lazy
 from textual.screen import Screen
@@ -127,7 +129,8 @@ class UI(App):
             self._config_warning = f"Config error — using defaults. ({exc})"
 
     async def on_mount(self) -> None:
-        self.ansi_theme_dark = terminal_theme.DIMMED_MONOKAI
+        self.ansi_theme_light = GRUVBOX_LIGHT_ANSI
+        self.console.push_theme(GRUVBOX_LIGHT_SYNTAX)
         await self.push_screen(LogScreen())
         self.screen.query("LogLines").focus()
         if self._config_warning:
