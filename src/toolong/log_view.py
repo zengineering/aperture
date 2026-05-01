@@ -13,11 +13,10 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Label
 
-
-from toolong.scan_progress_bar import ScanProgressBar
-
-from toolong.input import BIND_SEARCH, BIND_NEXT_MATCH, BIND_PREV_MATCH
-
+from toolong.find_dialog import FindDialog
+from toolong.input import BIND_NEXT_MATCH, BIND_PREV_MATCH
+from toolong.line_panel import LinePanel
+from toolong.log_lines import LogLines
 from toolong.messages import (
     DismissOverlay,
     Goto,
@@ -27,10 +26,8 @@ from toolong.messages import (
     ScanProgress,
     TailFile,
 )
-from toolong.find_dialog import FindDialog
-from toolong.line_panel import LinePanel
+from toolong.scan_progress_bar import ScanProgressBar
 from toolong.watcher import WatcherBase
-from toolong.log_lines import LogLines
 
 
 SPLIT_REGEX = r"[\s/\[\]]"
@@ -279,7 +276,7 @@ class LogView(Horizontal):
         Binding("ctrl+t", "toggle_tail", "Tail", key_display="^t"),
         Binding("ctrl+l", "toggle('show_line_numbers')", "Line nos.", key_display="^l"),
         Binding("ctrl+f", "show_find_dialog", "Find", key_display="^f"),
-        BIND_SEARCH,
+        Binding("slash", "show_find_dialog", show=False),
         Binding("ctrl+g", "goto", "Go to", key_display="^g"),
         BIND_NEXT_MATCH,
         BIND_PREV_MATCH,
