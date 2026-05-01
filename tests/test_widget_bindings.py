@@ -47,3 +47,8 @@ class TestLogLinesBindings:
         assert "down" in keys
         assert "left" in keys
         assert "right" in keys
+
+    def test_home_end_present(self):
+        keys = _expanded_keys(LogLines.BINDINGS)
+        assert "home" in keys, "home key should still navigate to top"
+        assert "end" in keys, "end key should still navigate to bottom"

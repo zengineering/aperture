@@ -141,6 +141,8 @@ class LogLines(ScrollView, inherit_bindings=False):
         BIND_SCROLL_DOWN,
         Binding("left,h", "scroll_left", "Scroll Left", show=False),
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
+        Binding("home", "scroll_home", show=False),
+        Binding("end", "scroll_end", show=False),
         BIND_JUMP_TO_TOP,
         BIND_JUMP_TO_BOTTOM,
         Binding("pageup,b", "page_up", "Page Up", show=False),
