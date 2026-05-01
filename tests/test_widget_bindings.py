@@ -52,3 +52,31 @@ class TestLogLinesBindings:
         keys = _expanded_keys(LogLines.BINDINGS)
         assert "home" in keys, "home key should still navigate to top"
         assert "end" in keys, "end key should still navigate to bottom"
+
+
+from toolong.log_view import LogView
+
+
+class TestLogViewBindings:
+    def test_slash_search_present(self):
+        assert "slash" in _expanded_keys(LogView.BINDINGS)
+
+    def test_n_present(self):
+        assert "n" in _expanded_keys(LogView.BINDINGS)
+
+    def test_N_present(self):
+        assert "N" in _expanded_keys(LogView.BINDINGS)
+
+    def test_n_maps_to_next_match(self):
+        action = _action_for_key(LogView.BINDINGS, "n")
+        assert action == "next_match"
+
+    def test_N_maps_to_prev_match(self):
+        action = _action_for_key(LogView.BINDINGS, "N")
+        assert action == "prev_match"
+
+    def test_stub_action_next_match_exists(self):
+        assert callable(getattr(LogView, "action_next_match", None))
+
+    def test_stub_action_prev_match_exists(self):
+        assert callable(getattr(LogView, "action_prev_match", None))
