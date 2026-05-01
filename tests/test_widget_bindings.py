@@ -1,4 +1,6 @@
 from toolong.log_lines import LogLines
+from toolong.log_view import LogView
+from toolong.ui import LogScreen, UI
 
 
 def _expanded_keys(bindings) -> set[str]:
@@ -54,9 +56,6 @@ class TestLogLinesBindings:
         assert "end" in keys, "end key should still navigate to bottom"
 
 
-from toolong.log_view import LogView
-
-
 class TestLogViewBindings:
     def test_slash_search_present(self):
         assert "slash" in _expanded_keys(LogView.BINDINGS)
@@ -80,9 +79,6 @@ class TestLogViewBindings:
 
     def test_stub_action_prev_match_exists(self):
         assert callable(getattr(LogView, "action_prev_match", None))
-
-
-from toolong.ui import LogScreen, UI
 
 
 class TestLogScreenBindings:

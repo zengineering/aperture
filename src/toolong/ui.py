@@ -10,7 +10,6 @@ from rich import terminal_theme
 from textual.app import App, ComposeResult
 
 from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
-from textual.binding import Binding
 from textual.lazy import Lazy
 from textual.screen import Screen
 from textual.widgets import TabbedContent, TabPane
@@ -138,7 +137,7 @@ class UI(App):
             self.capture_mouse(None)
             self._mouse_captured = False
         else:
-            self.capture_mouse(self.focused or self)
+            self.capture_mouse(self.focused or self.screen)
             self._mouse_captured = True
 
     def action_quit(self) -> None:
