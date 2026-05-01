@@ -80,3 +80,31 @@ class TestLogViewBindings:
 
     def test_stub_action_prev_match_exists(self):
         assert callable(getattr(LogView, "action_prev_match", None))
+
+
+from toolong.ui import LogScreen, UI
+
+
+class TestLogScreenBindings:
+    def test_help_key_is_question_mark(self):
+        action = _action_for_key(LogScreen.BINDINGS, "?")
+        assert action == "help"
+
+    def test_f1_not_present(self):
+        assert "f1" not in _expanded_keys(LogScreen.BINDINGS)
+
+    def test_q_maps_to_quit(self):
+        action = _action_for_key(LogScreen.BINDINGS, "q")
+        assert action == "quit"
+
+    def test_m_maps_to_toggle_mouse(self):
+        action = _action_for_key(LogScreen.BINDINGS, "m")
+        assert action == "toggle_mouse"
+
+
+class TestUIActions:
+    def test_action_toggle_mouse_exists(self):
+        assert callable(getattr(UI, "action_toggle_mouse", None))
+
+    def test_mouse_captured_default_true(self):
+        assert UI._mouse_captured is True
