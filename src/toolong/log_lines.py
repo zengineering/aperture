@@ -36,6 +36,12 @@ from textual.reactive import reactive
 from textual.scroll_view import ScrollView
 from textual.strip import Strip
 from textual.worker import Worker, get_current_worker
+from toolong.input import (
+    BIND_SCROLL_DOWN,
+    BIND_SCROLL_UP,
+    BIND_JUMP_TO_TOP,
+    BIND_JUMP_TO_BOTTOM,
+)
 
 
 import mmap
@@ -129,18 +135,18 @@ class SearchSuggester(Suggester):
 
 class LogLines(ScrollView, inherit_bindings=False):
     BINDINGS = [
-        Binding("up,w,k", "scroll_up", "Scroll Up", show=False),
-        Binding("down,s,j", "scroll_down", "Scroll Down", show=False),
+        Binding("up,w", "scroll_up", "Scroll Up", show=False),
+        BIND_SCROLL_UP,
+        Binding("down", "scroll_down", "Scroll Down", show=False),
+        BIND_SCROLL_DOWN,
         Binding("left,h", "scroll_left", "Scroll Left", show=False),
         Binding("right,l", "scroll_right", "Scroll Right", show=False),
-        Binding("home,G", "scroll_home", "Scroll Home", show=False),
-        Binding("end,g", "scroll_end", "Scroll End", show=False),
+        BIND_JUMP_TO_TOP,
+        BIND_JUMP_TO_BOTTOM,
         Binding("pageup,b", "page_up", "Page Up", show=False),
         Binding("pagedown,space", "page_down", "Page Down", show=False),
         Binding("enter", "select", "Select line", show=False),
         Binding("escape", "dismiss", "Dismiss", show=False, priority=True),
-        Binding("m", "navigate(+1, 'm')"),
-        Binding("M", "navigate(-1, 'm')"),
         Binding("o", "navigate(+1, 'h')"),
         Binding("O", "navigate(-1, 'h')"),
         Binding("d", "navigate(+1, 'd')"),
