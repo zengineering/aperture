@@ -10,7 +10,6 @@ from rich import terminal_theme
 from textual.app import App, ComposeResult
 
 from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
-from textual.binding import Binding
 from textual.lazy import Lazy
 from textual.screen import Screen
 from textual.widgets import TabbedContent, TabPane
@@ -18,6 +17,7 @@ from textual.widgets import TabbedContent, TabPane
 from toolong.log_view import LogView
 from toolong.watcher import get_watcher
 from toolong.help import HelpScreen
+from toolong.input import BIND_HELP, BIND_QUIT, BIND_MOUSE_TOGGLE
 
 
 locale.setlocale(locale.LC_ALL, "")
@@ -26,7 +26,9 @@ locale.setlocale(locale.LC_ALL, "")
 class LogScreen(Screen):
 
     BINDINGS = [
-        Binding("f1", "help", "Help"),
+        BIND_HELP,
+        BIND_QUIT,
+        BIND_MOUSE_TOGGLE,
     ]
 
     CSS = """
@@ -109,6 +111,8 @@ class CompareTokens:
 class UI(App):
     """The top level App object."""
 
+    _mouse_captured: bool = True
+
     @classmethod
     def sort_paths(cls, paths: list[str]) -> list[str]:
         return sorted(paths, key=CompareTokens)
@@ -127,6 +131,17 @@ class UI(App):
         except Exception as exc:
             self.aperture_config = ApertureConfig()
             self._config_warning = f"Config error — using defaults. ({exc})"
+
+    def action_toggle_mouse(self) -> None:
+        if self._mouse_captured:
+            self.capture_mouse(None)
+            self._mouse_captured = False
+        else:
+            self.capture_mouse(self.focused or self.screen)
+            self._mouse_captured = True
+
+    def action_quit(self) -> None:
+        self.exit()
 
     async def on_mount(self) -> None:
         self.ansi_theme_light = GRUVBOX_LIGHT_ANSI
