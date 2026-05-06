@@ -45,7 +45,7 @@ def app():
 def test_mouse_status_indicator_initial_state(app):
     """Indicator is empty on startup (mouse captured by default)."""
     indicator = app.query_one("#mouse-status", Static)
-    assert indicator.renderable == ""
+    assert str(indicator.renderable) == ""
 
 
 def test_mouse_status_indicator_shows_when_off(app):
@@ -60,4 +60,4 @@ def test_mouse_status_indicator_clears_when_restored(app):
     app.action_toggle_mouse()
     app.action_toggle_mouse()
     indicator = app.query_one("#mouse-status", Static)
-    assert indicator.renderable == ""
+    assert str(indicator.renderable) == ""
