@@ -74,11 +74,25 @@ class TestLogViewBindings:
         action = _action_for_key(LogView.BINDINGS, "N")
         assert action == "prev_match"
 
-    def test_stub_action_next_match_exists(self):
-        assert callable(getattr(LogView, "action_next_match", None))
+    def test_slash_maps_to_show_find_dialog(self):
+        action = _action_for_key(LogView.BINDINGS, "slash")
+        assert action == "show_find_dialog"
 
-    def test_stub_action_prev_match_exists(self):
-        assert callable(getattr(LogView, "action_prev_match", None))
+    def test_action_next_match_advances_forward(self):
+        from unittest.mock import MagicMock, patch
+        view = LogView.__new__(LogView)
+        mock_log_lines = MagicMock()
+        with patch.object(LogView, "query_one", return_value=mock_log_lines):
+            view.action_next_match()
+        mock_log_lines.advance_search.assert_called_once_with(1)
+
+    def test_action_prev_match_advances_backward(self):
+        from unittest.mock import MagicMock, patch
+        view = LogView.__new__(LogView)
+        mock_log_lines = MagicMock()
+        with patch.object(LogView, "query_one", return_value=mock_log_lines):
+            view.action_prev_match()
+        mock_log_lines.advance_search.assert_called_once_with(-1)
 
 
 class TestLogScreenBindings:
@@ -103,4 +117,5 @@ class TestUIActions:
         assert callable(getattr(UI, "action_toggle_mouse", None))
 
     def test_mouse_captured_default_true(self):
-        assert UI._mouse_captured is True
+        ui = UI(file_paths=[])
+        assert ui._mouse_captured is True
