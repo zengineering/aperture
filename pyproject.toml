@@ -20,6 +20,7 @@ tomli = {version = "^2.0", python = "<3.11"}
 [tool.poetry.group.dev.dependencies]
 textual-dev = "^1.4.0"
 pytest = "^7.0.0"
+pytest-asyncio = "^0.23.0"
 
 [tool.poetry.scripts]
 tl = "toolong.cli:run"
@@ -27,4 +28,7 @@ tl = "toolong.cli:run"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
 

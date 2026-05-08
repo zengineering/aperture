@@ -65,48 +65,52 @@ def test_config_os_error_falls_back_to_defaults():
 
 
 def test_warning_message_format():
-    """Warning message uses the expected format."""
+    """Warning message includes file path and recovery instructions."""
     with patch(
         "toolong.ui.load_config",
         side_effect=ValueError("bad value"),
     ):
         ui = UI([])
-    assert ui._config_warning == "Config error — using defaults. (bad value)"
+    assert "~/.config/aperture/config.toml" in ui._config_warning
+    assert "Delete the file to reset" in ui._config_warning
+    assert "bad value" in ui._config_warning
+
+
+def _run_on_mount(ui: UI) -> None:
+    """Run on_mount with all Textual side-effects mocked out."""
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock, PropertyMock
+
+    with (
+        patch.object(ui, "push_screen", new_callable=AsyncMock),
+        patch.object(ui, "console", MagicMock()),
+        patch.object(type(ui), "screen", new_callable=PropertyMock, return_value=MagicMock()),
+        patch.object(ui.watcher, "start"),
+    ):
+        asyncio.run(ui.on_mount())
 
 
 def test_on_mount_notifies_on_warning():
     """When _config_warning is set, on_mount calls notify with the right args."""
-    from unittest.mock import patch, MagicMock
-
     with patch("toolong.ui.load_config", side_effect=ValueError("bad value")):
         ui = UI([])
 
-    assert ui._config_warning == "Config error — using defaults. (bad value)"
-
-    # Verify the notify call would be made with correct arguments
     with patch.object(ui, "notify") as mock_notify:
-        # Simulate the notify block from on_mount
-        if ui._config_warning:
-            ui.notify(ui._config_warning, severity="warning", timeout=8)
+        _run_on_mount(ui)
 
-    mock_notify.assert_called_once_with(
-        "Config error — using defaults. (bad value)",
-        severity="warning",
-        timeout=8,
-    )
+    mock_notify.assert_called_once()
+    call_kwargs = mock_notify.call_args
+    assert "Config error" in call_kwargs.args[0]
+    assert call_kwargs.kwargs.get("severity") == "warning"
+    assert call_kwargs.kwargs.get("timeout") == 8
 
 
 def test_on_mount_does_not_notify_on_success():
     """When _config_warning is None, on_mount does not call notify."""
-    from unittest.mock import patch, MagicMock
-
     with patch("toolong.ui.load_config", return_value=ApertureConfig()):
         ui = UI([])
 
-    assert ui._config_warning is None
-
     with patch.object(ui, "notify") as mock_notify:
-        if ui._config_warning:
-            ui.notify(ui._config_warning, severity="warning", timeout=8)
+        _run_on_mount(ui)
 
     mock_notify.assert_not_called()
