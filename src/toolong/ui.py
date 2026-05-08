@@ -12,7 +12,7 @@ from textual.app import App, ComposeResult
 from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
 from textual.lazy import Lazy
 from textual.screen import Screen
-from textual.widgets import TabbedContent, TabPane
+from textual.widgets import Static, TabbedContent, TabPane
 
 from toolong.log_view import LogView
 from toolong.watcher import get_watcher
@@ -34,20 +34,31 @@ class LogScreen(Screen):
     CSS = """
     LogScreen {
         layers: overlay;
-        & TabPane {           
+        & TabPane {
             padding: 0;
         }
         & Tabs:focus Underline > .underline--bar {
             color: $accent;
-        }        
+        }
         Underline > .underline--bar {
             color: $panel;
+        }
+        & TabbedContent {
+            height: 1fr;
+        }
+        & #mouse-status {
+            height: 1;
+            dock: bottom;
+            color: $warning;
+            text-align: right;
+            padding-right: 1;
         }
     }
     """
 
     def compose(self) -> ComposeResult:
         assert isinstance(self.app, UI)
+        yield Static("", id="mouse-status")
         with TabbedContent():
             if self.app.merge and len(self.app.file_paths) > 1:
                 tab_name = " + ".join(Path(path).name for path in self.app.file_paths)
@@ -111,8 +122,6 @@ class CompareTokens:
 class UI(App):
     """The top level App object."""
 
-    _mouse_captured: bool = True
-
     @classmethod
     def sort_paths(cls, paths: list[str]) -> list[str]:
         return sorted(paths, key=CompareTokens)
@@ -124,13 +133,17 @@ class UI(App):
         self.merge = merge
         self.save_merge = save_merge
         self.watcher = get_watcher()
+        self._mouse_captured = True
         self._config_warning: str | None = None
         super().__init__()
         try:
             self.aperture_config: ApertureConfig = load_config()
-        except Exception as exc:
+        except (OSError, ValueError) as exc:
             self.aperture_config = ApertureConfig()
-            self._config_warning = f"Config error — using defaults. ({exc})"
+            self._config_warning = (
+                f"Config error in ~/.config/aperture/config.toml — using defaults. "
+                f"Delete the file to reset. Detail: {exc}"
+            )
 
     def action_toggle_mouse(self) -> None:
         if self._mouse_captured:
@@ -139,11 +152,16 @@ class UI(App):
         else:
             self.capture_mouse(self.focused or self.screen)
             self._mouse_captured = True
+        if isinstance(self.screen, LogScreen):
+            self.screen.query_one("#mouse-status", Static).update(
+                "[MOUSE OFF]" if not self._mouse_captured else ""
+            )
 
     def action_quit(self) -> None:
         self.exit()
 
     async def on_mount(self) -> None:
+        self.ansi_theme_dark = terminal_theme.DIMMED_MONOKAI
         self.ansi_theme_light = GRUVBOX_LIGHT_ANSI
         self.console.push_theme(GRUVBOX_LIGHT_SYNTAX)
         await self.push_screen(LogScreen())

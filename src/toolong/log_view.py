@@ -14,7 +14,7 @@ from textual.widget import Widget
 from textual.widgets import Label
 
 from toolong.find_dialog import FindDialog
-from toolong.input import BIND_NEXT_MATCH, BIND_PREV_MATCH
+from toolong.input import BIND_NEXT_MATCH, BIND_PREV_MATCH, BIND_SEARCH
 from toolong.line_panel import LinePanel
 from toolong.log_lines import LogLines
 from toolong.messages import (
@@ -276,7 +276,7 @@ class LogView(Horizontal):
         Binding("ctrl+t", "toggle_tail", "Tail", key_display="^t"),
         Binding("ctrl+l", "toggle('show_line_numbers')", "Line nos.", key_display="^l"),
         Binding("ctrl+f", "show_find_dialog", "Find", key_display="^f"),
-        Binding("slash", "show_find_dialog", show=False),
+        BIND_SEARCH,
         Binding("ctrl+g", "goto", "Go to", key_display="^g"),
         BIND_NEXT_MATCH,
         BIND_PREV_MATCH,
@@ -450,7 +450,7 @@ class LogView(Horizontal):
         self.app.push_screen(GotoScreen(self.query_one(LogLines)))
 
     def action_next_match(self) -> None:
-        pass  # implemented in search wiring phase
+        self.query_one(LogLines).advance_search(+1)
 
     def action_prev_match(self) -> None:
-        pass  # implemented in search wiring phase
+        self.query_one(LogLines).advance_search(-1)
