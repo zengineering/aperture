@@ -7,7 +7,8 @@ from pathlib import Path
 from toolong.config import load_config, ApertureConfig
 
 from rich import terminal_theme
-from textual.app import App, ComposeResult
+from textual.app import App, ComposeResult, ScreenStackError
+from textual.css.query import NoMatches
 
 from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
 from textual.lazy import Lazy
@@ -154,10 +155,17 @@ class UI(App):
         else:
             self.capture_mouse(self.focused or self.screen)
             self._mouse_captured = True
-        if isinstance(self.screen, LogScreen):
-            self.screen.query_one("#mouse-status", Static).update(
-                "[MOUSE OFF]" if not self._mouse_captured else ""
-            )
+        try:
+            screen = self.screen
+        except ScreenStackError:
+            return  # No screens on stack yet; nothing to update
+        if isinstance(screen, LogScreen):
+            try:
+                screen.query_one("#mouse-status", Static).update(
+                    "[MOUSE OFF]" if not self._mouse_captured else ""
+                )
+            except NoMatches:
+                pass  # DOM not yet fully built; state reflects on next render
 
     def action_quit(self) -> None:
         self.exit()

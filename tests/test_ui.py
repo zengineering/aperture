@@ -68,6 +68,17 @@ def test_ui_theme_is_gruvbox():
     assert UI.THEME == "gruvbox"
 
 
+def test_toggle_mouse_does_not_raise_before_screen_mounted():
+    """action_toggle_mouse must not propagate NoMatches if DOM is not ready."""
+    ui = UI(file_paths=[])
+    # Before on_mount, screen is not LogScreen — the isinstance guard covers this.
+    # This is a regression guard that must keep passing.
+    try:
+        ui.action_toggle_mouse()
+    except Exception as exc:
+        pytest.fail(f"action_toggle_mouse raised unexpectedly: {exc}")
+
+
 def test_config_toml_error_falls_back_to_defaults(tmp_path, monkeypatch):
     """A malformed config TOML should trigger fallback, not crash."""
     bad_toml = tmp_path / "config.toml"
