@@ -153,19 +153,21 @@ class UI(App):
             self.capture_mouse(None)
             self._mouse_captured = False
         else:
-            self.capture_mouse(self.focused or self.screen)
+            try:
+                self.capture_mouse(self.focused or self.screen)
+            except ScreenStackError:
+                pass  # No screen mounted yet; mouse state updated but capture skipped
             self._mouse_captured = True
         try:
-            screen = self.screen
+            if isinstance(self.screen, LogScreen):
+                try:
+                    self.screen.query_one("#mouse-status", Static).update(
+                        "[MOUSE OFF]" if not self._mouse_captured else ""
+                    )
+                except NoMatches:
+                    pass
         except ScreenStackError:
-            return  # No screens on stack yet; nothing to update
-        if isinstance(screen, LogScreen):
-            try:
-                screen.query_one("#mouse-status", Static).update(
-                    "[MOUSE OFF]" if not self._mouse_captured else ""
-                )
-            except NoMatches:
-                pass  # DOM not yet fully built; state reflects on next render
+            pass  # DOM not yet ready; status label updated on next render
 
     def action_quit(self) -> None:
         self.exit()
