@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # type: ignore[no-redef]
+
 import locale
 
 from pathlib import Path
@@ -140,7 +145,7 @@ class UI(App):
         super().__init__()
         try:
             self.aperture_config: ApertureConfig = load_config()
-        except (OSError, ValueError) as exc:
+        except (OSError, ValueError, tomllib.TOMLDecodeError, TypeError) as exc:
             self.aperture_config = ApertureConfig()
             self._config_warning = (
                 f"Config error in ~/.config/aperture/config.toml — using defaults. "

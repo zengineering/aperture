@@ -66,3 +66,14 @@ def test_mouse_status_indicator_clears_when_restored(app):
 def test_ui_theme_is_gruvbox():
     """UI class must declare gruvbox as the default Textual theme."""
     assert UI.THEME == "gruvbox"
+
+
+def test_config_toml_error_falls_back_to_defaults(tmp_path, monkeypatch):
+    """A malformed config TOML should trigger fallback, not crash."""
+    bad_toml = tmp_path / "config.toml"
+    bad_toml.write_text("this is not [ valid toml !!!", encoding="utf-8")
+    monkeypatch.setattr("toolong.config.loader._CONFIG_PATH", bad_toml)
+    ui = UI(file_paths=[])
+    assert ui.aperture_config is not None
+    assert ui._config_warning is not None
+    assert "config.toml" in ui._config_warning
