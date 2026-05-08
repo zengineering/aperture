@@ -1,5 +1,4 @@
 import pytest
-import pytest_asyncio
 from pathlib import Path
 from unittest.mock import patch
 from toolong.log_view import LogView
@@ -7,7 +6,7 @@ from toolong.log_lines import LogLines
 from toolong.ui import UI
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def log_view(tmp_path):
     """Start a headless UI with one log file and yield the LogView widget."""
     log_file = tmp_path / "test.log"

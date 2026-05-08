@@ -1,10 +1,9 @@
 import pytest
-import pytest_asyncio
 from textual.widgets import Static
 from toolong.ui import UI
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def app():
     """Run UI headless and yield the running app."""
     ui = UI(file_paths=[])
