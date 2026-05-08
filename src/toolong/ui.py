@@ -167,7 +167,7 @@ class UI(App):
                 except NoMatches:
                     pass
         except ScreenStackError:
-            pass  # DOM not yet ready; status label updated on next render
+            pass  # No screen mounted yet; skip status update
 
     def action_quit(self) -> None:
         self.exit()
