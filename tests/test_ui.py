@@ -61,3 +61,8 @@ def test_mouse_status_indicator_clears_when_restored(app):
     app.action_toggle_mouse()
     indicator = app.query_one("#mouse-status", Static)
     assert str(indicator.renderable) == ""
+
+
+def test_ui_theme_is_gruvbox():
+    """UI class must declare gruvbox as the default Textual theme."""
+    assert UI.THEME == "gruvbox"
