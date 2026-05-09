@@ -80,3 +80,58 @@ class TestUIConfigErrorHandling:
         assert ui.aperture_config is not None
         assert ui._config_warning is not None
         assert "config" in ui._config_warning.lower()
+
+
+from toolong.config.loader import _build_config, _KEYS_MAP
+
+
+class TestKeysMap:
+    def test_all_hyphenated_toml_keys_map_to_valid_keys_config_fields(self):
+        """Every value in _KEYS_MAP must be a real field on KeysConfig."""
+        import dataclasses
+        from toolong.config.schema import KeysConfig
+        valid_fields = {f.name for f in dataclasses.fields(KeysConfig)}
+        for toml_key, python_field in _KEYS_MAP.items():
+            assert python_field in valid_fields, (
+                f"_KEYS_MAP maps {toml_key!r} → {python_field!r}, "
+                f"but {python_field!r} is not a field on KeysConfig"
+            )
+
+    def test_hyphenated_key_in_toml_is_translated(self):
+        """A config with 'scroll-down = x' must set keys.scroll_down = 'x'."""
+        raw = {"keys": {"scroll-down": "x"}}
+        config = _build_config(raw)
+        assert config.keys.scroll_down == "x"
+
+    def test_all_hyphenated_keys_are_translated(self):
+        """All _KEYS_MAP entries round-trip through _build_config correctly."""
+        raw_keys = {toml_key: f"key_{i}" for i, toml_key in enumerate(_KEYS_MAP)}
+        raw = {"keys": raw_keys}
+        config = _build_config(raw)
+        for toml_key, python_field in _KEYS_MAP.items():
+            expected = raw_keys[toml_key]
+            actual = getattr(config.keys, python_field)
+            assert actual == expected, (
+                f"_KEYS_MAP[{toml_key!r}] = {python_field!r}: "
+                f"expected {expected!r}, got {actual!r}"
+            )
+
+
+class TestBuildConfigValidation:
+    def test_invalid_split_raises_value_error(self):
+        """_build_config must raise ValueError for an unrecognised panes.default-split."""
+        raw = {"panes": {"default-split": "diagonal"}}
+        with pytest.raises(ValueError, match="diagonal"):
+            _build_config(raw)
+
+    def test_valid_splits_are_accepted(self):
+        """All three valid split values must be accepted without error."""
+        for split in ("horizontal", "vertical", "floating"):
+            raw = {"panes": {"default-split": split}}
+            config = _build_config(raw)
+            assert config.panes.default_split == split
+
+    def test_default_split_is_horizontal(self):
+        """When panes section is absent, default_split defaults to 'horizontal'."""
+        config = _build_config({})
+        assert config.panes.default_split == "horizontal"
