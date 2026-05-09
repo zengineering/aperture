@@ -42,6 +42,24 @@ class TestMouseToggle:
                 ui.action_toggle_mouse()
         assert ui._mouse_captured is True
 
+    def test_mouse_state_flips_false_on_release(self):
+        """When _mouse_captured is True, action_toggle_mouse must flip it to False."""
+        ui = self._make_ui()
+        ui._mouse_captured = True
+        with patch.object(ui, "capture_mouse"):
+            with patch.object(type(ui), "screen", create=True, new_callable=lambda: MagicMock()):
+                ui.action_toggle_mouse()
+        assert ui._mouse_captured is False
+
+    def test_release_calls_capture_mouse_with_none(self):
+        """The release path must call capture_mouse(None), not with a widget."""
+        ui = self._make_ui()
+        ui._mouse_captured = True
+        with patch.object(ui, "capture_mouse") as mock_capture:
+            with patch.object(type(ui), "screen", create=True, new_callable=lambda: MagicMock()):
+                ui.action_toggle_mouse()
+        mock_capture.assert_called_once_with(None)
+
 
 import pytest
 from pathlib import Path
