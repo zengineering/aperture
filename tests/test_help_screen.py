@@ -37,7 +37,6 @@ class TestBindingGroups:
         assert "General" in names
 
 
-import pytest
 from textual.widgets import Label
 from toolong.help import ApertureHelpScreen
 from toolong.config.schema import KeysConfig
