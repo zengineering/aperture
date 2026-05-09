@@ -96,3 +96,42 @@ async def test_help_screen_escape_dismisses(running_app):
     await pilot.press("escape")
     await pilot.pause()
     assert isinstance(ui.screen, LogScreen)
+
+
+@pytest_asyncio.fixture
+async def app_with_custom_keys():
+    from toolong.config.schema import ApertureConfig, KeysConfig
+    custom_keys = KeysConfig(help="h", quit="x", mouse_toggle="z")
+    ui = UI(file_paths=[])
+    ui.aperture_config = ApertureConfig(keys=custom_keys)
+    async with ui.run_test(headless=True) as pilot:
+        await pilot.pause()
+        yield ui, pilot
+
+
+@pytest.mark.asyncio
+async def test_custom_help_key_pushes_help_screen(app_with_custom_keys):
+    """Pressing the custom help key 'h' must push ApertureHelpScreen."""
+    ui, pilot = app_with_custom_keys
+    await pilot.press("h")
+    await pilot.pause()
+    assert isinstance(ui.screen, ApertureHelpScreen)
+
+
+@pytest.mark.asyncio
+async def test_default_help_key_no_longer_works_after_remap(app_with_custom_keys):
+    """After remapping help to 'h', pressing '?' must NOT push ApertureHelpScreen."""
+    ui, pilot = app_with_custom_keys
+    await pilot.press("question_mark")
+    await pilot.pause()
+    assert not isinstance(ui.screen, ApertureHelpScreen)
+
+
+@pytest.mark.asyncio
+async def test_custom_quit_key_exits_app(app_with_custom_keys):
+    """The app has an action_quit method, and pressing 'x' does not open help screen."""
+    ui, pilot = app_with_custom_keys
+    assert callable(getattr(ui, "action_quit", None))
+    await pilot.press("x")
+    await pilot.pause()
+    assert not isinstance(ui.screen, ApertureHelpScreen)
