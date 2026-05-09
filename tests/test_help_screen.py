@@ -6,7 +6,7 @@ import pytest
 import pytest_asyncio
 from textual.widgets import Label
 
-from toolong.config.schema import KeysConfig
+from toolong.config.schema import ApertureConfig, KeysConfig
 from toolong.help import ApertureHelpScreen
 from toolong.input.bindings import BINDING_GROUPS, BindingEntry
 from toolong.ui import UI, LogScreen
@@ -100,7 +100,7 @@ async def test_help_screen_escape_dismisses(running_app):
 
 @pytest_asyncio.fixture
 async def app_with_custom_keys():
-    from toolong.config.schema import ApertureConfig, KeysConfig
+    """Run UI headless with help='h', quit='x', mouse_toggle='z' and yield (app, pilot)."""
     custom_keys = KeysConfig(help="h", quit="x", mouse_toggle="z")
     ui = UI(file_paths=[])
     ui.aperture_config = ApertureConfig(keys=custom_keys)
@@ -128,7 +128,7 @@ async def test_default_help_key_no_longer_works_after_remap(app_with_custom_keys
 
 
 @pytest.mark.asyncio
-async def test_custom_quit_key_exits_app(app_with_custom_keys):
+async def test_custom_quit_key_does_not_open_help_screen(app_with_custom_keys):
     """The app has an action_quit method, and pressing 'x' does not open help screen."""
     ui, pilot = app_with_custom_keys
     assert callable(getattr(ui, "action_quit", None))
