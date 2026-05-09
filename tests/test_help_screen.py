@@ -60,8 +60,10 @@ class TestApertureHelpScreen:
 
 @pytest_asyncio.fixture
 async def running_app():
-    """Run UI headless and yield (app, pilot)."""
-    ui = UI(file_paths=[])
+    """Run UI headless and yield (app, pilot). load_config is patched to avoid file I/O."""
+    from unittest.mock import patch
+    with patch("toolong.ui.load_config", return_value=ApertureConfig()):
+        ui = UI(file_paths=[])
     async with ui.run_test(headless=True) as pilot:
         await pilot.pause()
         yield ui, pilot
@@ -100,10 +102,13 @@ async def test_help_screen_escape_dismisses(running_app):
 
 @pytest_asyncio.fixture
 async def app_with_custom_keys():
-    """Run UI headless with help='h', quit='x', mouse_toggle='z' and yield (app, pilot)."""
+    """Run UI headless with help='h', quit='x', mouse_toggle='z' and yield (app, pilot).
+    load_config is patched so custom keys are active from the first on_mount call."""
+    from unittest.mock import patch
     custom_keys = KeysConfig(help="h", quit="x", mouse_toggle="z")
-    ui = UI(file_paths=[])
-    ui.aperture_config = ApertureConfig(keys=custom_keys)
+    custom_config = ApertureConfig(keys=custom_keys)
+    with patch("toolong.ui.load_config", return_value=custom_config):
+        ui = UI(file_paths=[])
     async with ui.run_test(headless=True) as pilot:
         await pilot.pause()
         yield ui, pilot
