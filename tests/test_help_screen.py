@@ -35,3 +35,23 @@ class TestBindingGroups:
         assert "Search" in names
         assert "Panes" in names
         assert "General" in names
+
+
+import pytest
+from textual.widgets import Label
+from toolong.help import ApertureHelpScreen
+from toolong.config.schema import KeysConfig
+
+
+class TestApertureHelpScreen:
+    def test_importable(self):
+        assert ApertureHelpScreen is not None
+
+    def test_accepts_keys_config(self):
+        keys = KeysConfig()
+        screen = ApertureHelpScreen(keys)
+        assert screen is not None
+
+    def test_escape_binding_present(self):
+        bound_keys = {b.key for b in ApertureHelpScreen.BINDINGS}
+        assert any("escape" in k for k in bound_keys)
