@@ -177,3 +177,15 @@ class TestNormalizeKeyEdgeCases:
         """A character with no Unicode name must raise ValueError with a clear message."""
         with pytest.raises(ValueError, match="not a valid bindable character"):
             LogScreen._normalize_key("\x00")
+
+
+class TestBindingEntryValidation:
+    def test_invalid_field_name_raises_on_construction(self):
+        """BindingEntry must raise ValueError when field is not a KeysConfig attribute."""
+        with pytest.raises(ValueError, match="not a field on KeysConfig"):
+            BindingEntry(label="Test", field="nonexistent_field")
+
+    def test_valid_field_name_constructs_without_error(self):
+        """BindingEntry must accept any real KeysConfig field name."""
+        entry = BindingEntry(label="Scroll down", field="scroll_down")
+        assert entry.field == "scroll_down"

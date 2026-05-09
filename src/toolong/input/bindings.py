@@ -39,6 +39,16 @@ class BindingEntry:
     label: str
     field: str
 
+    def __post_init__(self) -> None:
+        import dataclasses
+        from toolong.config.schema import KeysConfig
+        valid = {f.name for f in dataclasses.fields(KeysConfig)}
+        if self.field not in valid:
+            raise ValueError(
+                f"{self.field!r} is not a field on KeysConfig. "
+                f"Valid fields: {sorted(valid)}"
+            )
+
 
 BINDING_GROUPS: list[tuple[str, list[BindingEntry]]] = [
     ("Navigation", [
