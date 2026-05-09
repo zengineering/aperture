@@ -14,6 +14,7 @@ from textual.widgets import TabbedContent, TabPane
 from toolong.log_view import LogView
 from toolong.watcher import get_watcher
 from toolong.help import ApertureHelpScreen
+from toolong.input import BIND_HELP
 from toolong.config.schema import KeysConfig
 
 
@@ -23,7 +24,8 @@ locale.setlocale(locale.LC_ALL, "")
 class LogScreen(Screen):
 
     BINDINGS = [
-        Binding("f1", "help", "Help"),
+        BIND_HELP,
+        Binding("f1", "help", "Help", show=False),
     ]
 
     CSS = """
@@ -117,7 +119,7 @@ class UI(App):
         self.merge = merge
         self.save_merge = save_merge
         self.watcher = get_watcher()
-        self.aperture_config = KeysConfig()
+        self.aperture_config: KeysConfig = KeysConfig()
         super().__init__()
 
     async def on_mount(self) -> None:
