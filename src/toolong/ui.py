@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import locale
+import unicodedata
 
 from pathlib import Path
 
@@ -14,7 +15,6 @@ from toolong.config.schema import KeysConfig
 
 from rich import terminal_theme
 from textual.app import App, ComposeResult, ScreenStackError
-import unicodedata
 from textual.keys import KEY_NAME_REPLACEMENTS
 from textual.css.query import NoMatches
 
