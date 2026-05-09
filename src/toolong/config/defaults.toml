@@ -1,0 +1,43 @@
+# Aperture Configuration
+# Location: ~/.config/aperture/config.toml
+
+[theme]
+# Optional: override individual Textual CSS variables for UI chrome
+# accent = "#d65d0e"
+# background = "#fbf1c7"
+# foreground = "#282828"
+# panel_background = "#f9f5d9"
+# panel_foreground = "#282828"
+# border = "#d65d0e"
+# primary = "#d65d0e"
+# secondary = "#8ec07c"
+# warning = "#fabd2f"
+# error = "#fb4934"
+# success = "#b8bb26"
+# info = "#83a598"
+
+[keys]
+# Navigation
+scroll-down    = "j"
+scroll-up      = "k"
+jump-to-top    = "g"
+jump-to-bottom = "G"
+
+# Search
+search         = "/"
+next-match     = "n"
+prev-match     = "N"
+
+# Pane management
+open-pane        = "enter"
+horizontal-split = "s"
+vertical-split   = "v"
+floating-split   = "f"
+
+# General
+mouse-toggle = "m"
+help         = "?"
+quit         = "q"
+
+[panes]
+default-split = "horizontal"  # horizontal | vertical | floating

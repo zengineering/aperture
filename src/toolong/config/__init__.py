@@ -1,5 +1,4 @@
-from __future__ import annotations
+from toolong.config.loader import load_config
+from toolong.config.schema import ApertureConfig, KeysConfig, PanesConfig, ThemeConfig
 
-from toolong.config.schema import KeysConfig
-
-__all__ = ["KeysConfig"]
+__all__ = ["load_config", "ApertureConfig", "KeysConfig", "PanesConfig", "ThemeConfig"]

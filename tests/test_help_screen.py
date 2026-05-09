@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 import dataclasses
-from toolong.input.bindings import BINDING_GROUPS, BindingEntry
+
+import pytest
+import pytest_asyncio
+from textual.widgets import Label
+
 from toolong.config.schema import KeysConfig
+from toolong.help import ApertureHelpScreen
+from toolong.input.bindings import BINDING_GROUPS, BindingEntry
+from toolong.ui import UI, LogScreen
 
 
 class TestBindingGroups:
@@ -23,11 +30,11 @@ class TestBindingGroups:
                 )
 
     def test_no_duplicate_fields(self):
-        seen = []
+        seen = set()
         for _name, entries in BINDING_GROUPS:
             for entry in entries:
                 assert entry.field not in seen, f"Duplicate field: {entry.field!r}"
-                seen.append(entry.field)
+                seen.add(entry.field)
 
     def test_groups_contain_expected_names(self):
         names = [name for name, _ in BINDING_GROUPS]
@@ -35,11 +42,6 @@ class TestBindingGroups:
         assert "Search" in names
         assert "Panes" in names
         assert "General" in names
-
-
-from textual.widgets import Label
-from toolong.help import ApertureHelpScreen
-from toolong.config.schema import KeysConfig
 
 
 class TestApertureHelpScreen:
@@ -56,13 +58,6 @@ class TestApertureHelpScreen:
         assert any("escape" in k for k in bound_keys)
 
 
-import pytest
-import pytest_asyncio
-from toolong.ui import UI, LogScreen
-from toolong.help import ApertureHelpScreen
-from textual.widgets import Label
-
-
 @pytest_asyncio.fixture
 async def running_app():
     """Run UI headless and yield (app, pilot)."""
@@ -76,7 +71,7 @@ async def running_app():
 async def test_help_action_pushes_aperture_help_screen(running_app):
     """Pressing ? must push ApertureHelpScreen."""
     ui, pilot = running_app
-    await pilot.press("f1")
+    await pilot.press("question_mark")
     await pilot.pause()
     assert isinstance(ui.screen, ApertureHelpScreen)
 
@@ -85,7 +80,7 @@ async def test_help_action_pushes_aperture_help_screen(running_app):
 async def test_help_screen_shows_navigation_group(running_app):
     """The rendered help screen contains the word 'Navigation'."""
     ui, pilot = running_app
-    await pilot.press("f1")
+    await pilot.press("question_mark")
     await pilot.pause()
     labels = ui.screen.query(Label)
     texts = [str(lbl.renderable) for lbl in labels]
@@ -96,7 +91,7 @@ async def test_help_screen_shows_navigation_group(running_app):
 async def test_help_screen_escape_dismisses(running_app):
     """ESC dismisses the help screen and returns to LogScreen."""
     ui, pilot = running_app
-    await pilot.press("f1")
+    await pilot.press("question_mark")
     await pilot.pause()
     await pilot.press("escape")
     await pilot.pause()
