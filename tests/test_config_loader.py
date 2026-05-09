@@ -41,3 +41,29 @@ class TestMouseToggle:
             with patch.object(type(ui), "screen", create=True, new_callable=lambda: MagicMock()):
                 ui.action_toggle_mouse()
         assert ui._mouse_captured is True
+
+
+import pytest
+from pathlib import Path
+from toolong.config.loader import load_config
+
+
+class TestLoadConfigFirstRun:
+    def test_write_failure_raises_oserror_with_helpful_message(self, tmp_path):
+        """A write failure during first-run setup must raise OSError with a clear message."""
+        config_path = tmp_path / "sub" / "config.toml"
+        config_path.parent.mkdir()
+        config_path.parent.chmod(0o444)  # read-only — write will fail
+        try:
+            with pytest.raises(OSError, match="Failed to create default config"):
+                load_config(config_path)
+        finally:
+            config_path.parent.chmod(0o755)  # restore so tmp_path cleanup works
+
+    def test_first_run_creates_config_file(self, tmp_path):
+        """When config does not exist, load_config creates it from defaults."""
+        config_path = tmp_path / "config.toml"
+        assert not config_path.exists()
+        result = load_config(config_path)
+        assert config_path.exists()
+        assert result is not None

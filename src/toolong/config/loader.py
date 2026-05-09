@@ -47,9 +47,14 @@ def _from_raw(cls: Type[T], raw: Dict[str, Any]) -> T:
 def load_config(config_path: Path | None = None) -> ApertureConfig:
     """Load config from path, creating it from bundled defaults on first run."""
     path = config_path if config_path is not None else _CONFIG_PATH
-    if not path.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(_DEFAULTS_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+    try:
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(_DEFAULTS_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+    except OSError as exc:
+        raise OSError(
+            f"Failed to create default config at {path}: {exc}"
+        ) from exc
     with open(path, "rb") as f:
         raw: Dict[str, Any] = tomllib.load(f)
     return _build_config(raw)
