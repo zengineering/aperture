@@ -145,3 +145,16 @@ class TestUITypeErrorPropagates:
         with patch("toolong.ui.load_config", side_effect=TypeError("internal bug")):
             with pytest.raises(TypeError, match="internal bug"):
                 UI(file_paths=[])
+
+
+class TestLoadConfigErrorMessages:
+    def test_toml_decode_error_includes_file_path(self, tmp_path):
+        """When TOML is malformed, the error message must include the config file path."""
+        bad_config = tmp_path / "config.toml"
+        bad_config.write_text("[invalid toml\n", encoding="utf-8")
+        try:
+            import tomllib
+        except ImportError:
+            import tomli as tomllib  # type: ignore[no-redef]
+        with pytest.raises(Exception, match=str(bad_config)):
+            load_config(bad_config)

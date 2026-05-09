@@ -55,8 +55,11 @@ def load_config(config_path: Path | None = None) -> ApertureConfig:
         raise OSError(
             f"Failed to create default config at {path}: {exc}"
         ) from exc
-    with open(path, "rb") as f:
-        raw: Dict[str, Any] = tomllib.load(f)
+    try:
+        with open(path, "rb") as f:
+            raw: Dict[str, Any] = tomllib.load(f)
+    except tomllib.TOMLDecodeError as exc:
+        raise tomllib.TOMLDecodeError(f"Invalid TOML in {path}: {exc}") from exc
     return _build_config(raw)
 
 
