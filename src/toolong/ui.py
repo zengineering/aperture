@@ -128,6 +128,8 @@ class CompareTokens:
         ]
 
     def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CompareTokens):
+            return NotImplemented
         return self.tokens == other.tokens
 
     def __lt__(self, other: CompareTokens) -> bool:
