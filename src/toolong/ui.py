@@ -13,7 +13,8 @@ from textual.widgets import TabbedContent, TabPane
 
 from toolong.log_view import LogView
 from toolong.watcher import get_watcher
-from toolong.help import HelpScreen
+from toolong.help import ApertureHelpScreen
+from toolong.config.schema import KeysConfig
 
 
 locale.setlocale(locale.LC_ALL, "")
@@ -72,7 +73,7 @@ class LogScreen(Screen):
             active_pane.query("LogView > LogLines").focus()
 
     def action_help(self) -> None:
-        self.app.push_screen(HelpScreen())
+        self.app.push_screen(ApertureHelpScreen(self.app.aperture_config))
 
 
 from functools import total_ordering
@@ -116,6 +117,7 @@ class UI(App):
         self.merge = merge
         self.save_merge = save_merge
         self.watcher = get_watcher()
+        self.aperture_config = KeysConfig()
         super().__init__()
 
     async def on_mount(self) -> None:

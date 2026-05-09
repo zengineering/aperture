@@ -54,3 +54,50 @@ class TestApertureHelpScreen:
     def test_escape_binding_present(self):
         bound_keys = {b.key for b in ApertureHelpScreen.BINDINGS}
         assert any("escape" in k for k in bound_keys)
+
+
+import pytest
+import pytest_asyncio
+from toolong.ui import UI, LogScreen
+from toolong.help import ApertureHelpScreen
+from textual.widgets import Label
+
+
+@pytest_asyncio.fixture
+async def running_app():
+    """Run UI headless and yield (app, pilot)."""
+    ui = UI(file_paths=[])
+    async with ui.run_test(headless=True) as pilot:
+        await pilot.pause()
+        yield ui, pilot
+
+
+@pytest.mark.asyncio
+async def test_help_action_pushes_aperture_help_screen(running_app):
+    """Pressing ? must push ApertureHelpScreen."""
+    ui, pilot = running_app
+    await pilot.press("f1")
+    await pilot.pause()
+    assert isinstance(ui.screen, ApertureHelpScreen)
+
+
+@pytest.mark.asyncio
+async def test_help_screen_shows_navigation_group(running_app):
+    """The rendered help screen contains the word 'Navigation'."""
+    ui, pilot = running_app
+    await pilot.press("f1")
+    await pilot.pause()
+    labels = ui.screen.query(Label)
+    texts = [str(lbl.renderable) for lbl in labels]
+    assert any("Navigation" in t for t in texts)
+
+
+@pytest.mark.asyncio
+async def test_help_screen_escape_dismisses(running_app):
+    """ESC dismisses the help screen and returns to LogScreen."""
+    ui, pilot = running_app
+    await pilot.press("f1")
+    await pilot.pause()
+    await pilot.press("escape")
+    await pilot.pause()
+    assert isinstance(ui.screen, LogScreen)
