@@ -176,9 +176,9 @@ class UI(App):
         else:
             try:
                 self.capture_mouse(self.focused or self.screen)
+                self._mouse_captured = True
             except ScreenStackError:
-                pass  # No screen mounted yet; mouse state updated but capture skipped
-            self._mouse_captured = True
+                pass  # No screen mounted yet; state unchanged
         try:
             if isinstance(self.screen, LogScreen):
                 try:
