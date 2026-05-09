@@ -5,9 +5,11 @@ import locale
 from pathlib import Path
 
 from toolong.config import load_config, ApertureConfig
+from toolong.config.schema import KeysConfig
 
 from rich import terminal_theme
 from textual.app import App, ComposeResult, ScreenStackError
+from textual.keys import _character_to_key
 from textual.css.query import NoMatches
 
 from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
@@ -18,7 +20,6 @@ from textual.widgets import Static, TabbedContent, TabPane
 from toolong.log_view import LogView
 from toolong.watcher import get_watcher
 from toolong.help import ApertureHelpScreen
-from toolong.input import BIND_HELP, BIND_QUIT, BIND_MOUSE_TOGGLE
 
 
 locale.setlocale(locale.LC_ALL, "")
@@ -26,11 +27,11 @@ locale.setlocale(locale.LC_ALL, "")
 
 class LogScreen(Screen):
 
-    BINDINGS = [
-        BIND_HELP,
-        BIND_QUIT,
-        BIND_MOUSE_TOGGLE,
-    ]
+    BINDINGS: list = []
+
+    def __init__(self, keys: KeysConfig) -> None:
+        super().__init__()
+        self._keys = keys
 
     CSS = """
     LogScreen {
@@ -82,7 +83,15 @@ class LogScreen(Screen):
                             )
                         )
 
+    @staticmethod
+    def _normalize_key(key: str) -> str:
+        """Normalize a key string the same way _Bindings.__init__ does."""
+        return _character_to_key(key) if len(key) == 1 else key
+
     def on_mount(self) -> None:
+        self._bindings.bind(self._normalize_key(self._keys.help), "help", description="Help")
+        self._bindings.bind(self._normalize_key(self._keys.quit), "quit", description="Quit")
+        self._bindings.bind(self._normalize_key(self._keys.mouse_toggle), "toggle_mouse", description="Mouse", show=False)
         assert isinstance(self.app, UI)
         self.query("TabbedContent Tabs").set(display=len(self.query(TabPane)) > 1)
         active_pane = self.query_one(TabbedContent).active_pane
@@ -176,7 +185,7 @@ class UI(App):
         self.ansi_theme_dark = terminal_theme.DIMMED_MONOKAI
         self.ansi_theme_light = GRUVBOX_LIGHT_ANSI
         self.console.push_theme(GRUVBOX_LIGHT_SYNTAX)
-        await self.push_screen(LogScreen())
+        await self.push_screen(LogScreen(self.aperture_config.keys))
         self.screen.query("LogLines").focus()
         if self._config_warning:
             self.notify(self._config_warning, severity="warning", timeout=8)
