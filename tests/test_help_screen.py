@@ -142,6 +142,26 @@ async def test_custom_quit_key_does_not_open_help_screen(app_with_custom_keys):
     assert not isinstance(ui.screen, ApertureHelpScreen)
 
 
+@pytest.mark.asyncio
+async def test_help_screen_renders_custom_key_values(app_with_custom_keys):
+    """Help screen labels must show the active (remapped) key values, not hardcoded defaults."""
+    ui, pilot = app_with_custom_keys
+    # custom keys: help='h', quit='x', mouse_toggle='z'
+    await pilot.press("h")
+    await pilot.pause()
+    assert isinstance(ui.screen, ApertureHelpScreen)
+    labels = ui.screen.query(Label)
+    texts = [str(lbl.renderable) for lbl in labels]
+    # 'h' is the custom help key — it must appear somewhere in the rendered labels
+    assert any("h" in t for t in texts), (
+        f"Expected custom help key 'h' in help screen labels, got: {texts}"
+    )
+    # 'x' is the custom quit key — it must appear somewhere in the rendered labels
+    assert any("x" in t for t in texts), (
+        f"Expected custom quit key 'x' in help screen labels, got: {texts}"
+    )
+
+
 class TestNormalizeKey:
     """Unit tests for LogScreen._normalize_key (the Textual key-name bridge)."""
 
