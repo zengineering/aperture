@@ -86,6 +86,24 @@ class TestLoadConfigFirstRun:
         assert config_path.exists()
         assert result is not None
 
+    def test_existing_file_is_read_not_overwritten(self, tmp_path):
+        """load_config must read an existing file and reflect its custom values."""
+        config_path = tmp_path / "config.toml"
+        config_path.write_text(
+            '[keys]\nscroll-down = "x"\n',
+            encoding="utf-8",
+        )
+        result = load_config(config_path)
+        assert result.keys.scroll_down == "x"
+
+    def test_existing_file_is_not_replaced_by_defaults(self, tmp_path):
+        """load_config must not overwrite an existing config file."""
+        config_path = tmp_path / "config.toml"
+        original_content = '[keys]\nscroll-down = "x"\n'
+        config_path.write_text(original_content, encoding="utf-8")
+        load_config(config_path)
+        assert config_path.read_text(encoding="utf-8") == original_content
+
 
 import tomllib
 
