@@ -140,3 +140,33 @@ async def test_custom_quit_key_does_not_open_help_screen(app_with_custom_keys):
     await pilot.press("x")
     await pilot.pause()
     assert not isinstance(ui.screen, ApertureHelpScreen)
+
+
+class TestNormalizeKey:
+    """Unit tests for LogScreen._normalize_key (the Textual key-name bridge)."""
+
+    def test_multichar_key_returned_verbatim(self):
+        """Keys longer than 1 character are returned unchanged."""
+        assert LogScreen._normalize_key("enter") == "enter"
+        assert LogScreen._normalize_key("f1") == "f1"
+        assert LogScreen._normalize_key("ctrl+c") == "ctrl+c"
+
+    def test_alphanumeric_returned_as_is(self):
+        """Single alphanumeric characters are returned unchanged."""
+        assert LogScreen._normalize_key("j") == "j"
+        assert LogScreen._normalize_key("G") == "G"
+        assert LogScreen._normalize_key("n") == "n"
+
+    def test_question_mark_normalized(self):
+        """'?' must normalize to the Textual key name for question mark."""
+        result = LogScreen._normalize_key("?")
+        assert result == "question_mark"
+
+    def test_slash_normalized(self):
+        """'/' must normalize to the Textual key name for slash."""
+        result = LogScreen._normalize_key("/")
+        assert result == "slash"
+
+    def test_single_digit_is_alphanumeric(self):
+        """Single digit characters are alphanumeric and returned as-is."""
+        assert LogScreen._normalize_key("1") == "1"
