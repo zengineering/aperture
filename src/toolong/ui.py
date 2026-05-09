@@ -146,8 +146,6 @@ class CompareTokens:
 class UI(App):
     """The top level App object."""
 
-    THEME = "gruvbox"
-
     @classmethod
     def sort_paths(cls, paths: list[str]) -> list[str]:
         return sorted(paths, key=CompareTokens)
