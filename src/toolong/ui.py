@@ -9,7 +9,8 @@ from toolong.config.schema import KeysConfig
 
 from rich import terminal_theme
 from textual.app import App, ComposeResult, ScreenStackError
-from textual.keys import _character_to_key
+import unicodedata
+from textual.keys import KEY_NAME_REPLACEMENTS
 from textual.css.query import NoMatches
 
 from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
@@ -85,8 +86,19 @@ class LogScreen(Screen):
 
     @staticmethod
     def _normalize_key(key: str) -> str:
-        """Normalize a key string the same way _Bindings.__init__ does."""
-        return _character_to_key(key) if len(key) == 1 else key
+        """Normalize a single-character key to the name Textual expects in bindings.
+
+        Replicates the logic of textual.keys._character_to_key using only public
+        APIs (KEY_NAME_REPLACEMENTS and unicodedata) because _Bindings.bind() does
+        NOT normalize keys internally — it stores whatever string is passed verbatim.
+        """
+        if len(key) != 1:
+            return key
+        if not key.isalnum():
+            name = unicodedata.name(key).lower().replace("-", "_").replace(" ", "_")
+        else:
+            name = key
+        return KEY_NAME_REPLACEMENTS.get(name, name)
 
     def on_mount(self) -> None:
         self._bindings.bind(self._normalize_key(self._keys.help), "help", description="Help")
