@@ -135,3 +135,13 @@ class TestBuildConfigValidation:
         """When panes section is absent, default_split defaults to 'horizontal'."""
         config = _build_config({})
         assert config.panes.default_split == "horizontal"
+
+
+class TestUITypeErrorPropagates:
+    def test_type_error_in_load_config_propagates(self):
+        """TypeError from a programming bug must not be silently swallowed as a config warning."""
+        from unittest.mock import patch
+        from toolong.ui import UI
+        with patch("toolong.ui.load_config", side_effect=TypeError("internal bug")):
+            with pytest.raises(TypeError, match="internal bug"):
+                UI(file_paths=[])

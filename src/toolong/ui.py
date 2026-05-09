@@ -167,7 +167,7 @@ class UI(App):
         super().__init__()
         try:
             self.aperture_config: ApertureConfig = load_config()
-        except (OSError, ValueError, TypeError, tomllib.TOMLDecodeError) as exc:
+        except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
             self.aperture_config = ApertureConfig()
             self._config_warning = (
                 f"Config error in ~/.config/aperture/config.toml — using defaults. "
