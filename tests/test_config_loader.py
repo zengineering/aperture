@@ -67,3 +67,16 @@ class TestLoadConfigFirstRun:
         result = load_config(config_path)
         assert config_path.exists()
         assert result is not None
+
+
+import tomllib
+
+
+class TestUIConfigErrorHandling:
+    def test_malformed_toml_falls_back_to_defaults(self):
+        """A config file with invalid TOML must produce a warning, not a crash."""
+        with patch("toolong.ui.load_config", side_effect=tomllib.TOMLDecodeError("bad", "", 0)):
+            ui = UI(file_paths=[])
+        assert ui.aperture_config is not None
+        assert ui._config_warning is not None
+        assert "config" in ui._config_warning.lower()

@@ -4,6 +4,11 @@ import locale
 
 from pathlib import Path
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # type: ignore[no-redef]
+
 from toolong.config import load_config, ApertureConfig
 from toolong.config.schema import KeysConfig
 
@@ -162,7 +167,7 @@ class UI(App):
         super().__init__()
         try:
             self.aperture_config: ApertureConfig = load_config()
-        except (OSError, ValueError, TypeError) as exc:
+        except (OSError, ValueError, TypeError, tomllib.TOMLDecodeError) as exc:
             self.aperture_config = ApertureConfig()
             self._config_warning = (
                 f"Config error in ~/.config/aperture/config.toml — using defaults. "
