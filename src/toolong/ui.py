@@ -100,7 +100,13 @@ class LogScreen(Screen):
         if len(key) != 1:
             return key
         if not key.isalnum():
-            name = unicodedata.name(key).lower().replace("-", "_").replace(" ", "_")
+            try:
+                name = unicodedata.name(key).lower().replace("-", "_").replace(" ", "_")
+            except ValueError:
+                raise ValueError(
+                    f"{key!r} is not a valid bindable character. "
+                    f"Check your ~/.config/aperture/config.toml."
+                )
         else:
             name = key
         return KEY_NAME_REPLACEMENTS.get(name, name)

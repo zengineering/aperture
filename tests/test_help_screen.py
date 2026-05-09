@@ -170,3 +170,10 @@ class TestNormalizeKey:
     def test_single_digit_is_alphanumeric(self):
         """Single digit characters are alphanumeric and returned as-is."""
         assert LogScreen._normalize_key("1") == "1"
+
+
+class TestNormalizeKeyEdgeCases:
+    def test_control_character_raises_value_error_with_message(self):
+        """A character with no Unicode name must raise ValueError with a clear message."""
+        with pytest.raises(ValueError, match="not a valid bindable character"):
+            LogScreen._normalize_key("\x00")
