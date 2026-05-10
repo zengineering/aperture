@@ -49,3 +49,57 @@ async def test_next_and_prev_match_use_opposite_signs(log_view):
     assert calls[0] == 1, f"next_match should pass +1, got {calls[0]}"
     assert calls[1] == -1, f"prev_match should pass -1, got {calls[1]}"
     assert calls[0] != calls[1], "next and prev must use different signs"
+
+
+import asyncio
+
+
+async def test_split_mode_starts_as_none(log_view):
+    """split_mode must be None on mount (panel hidden)."""
+    assert log_view.split_mode is None
+
+
+async def test_split_mode_none_removes_show_panel_class(log_view):
+    """Setting split_mode to None must remove the show-panel CSS class."""
+    log_view.split_mode = "vertical"
+    await asyncio.sleep(0)
+    log_view.split_mode = None
+    await asyncio.sleep(0)
+    assert not log_view.has_class("show-panel")
+
+
+async def test_split_mode_vertical_adds_show_panel_class(log_view):
+    """Setting split_mode to 'vertical' must add the show-panel CSS class."""
+    log_view.split_mode = "vertical"
+    await asyncio.sleep(0)
+    assert log_view.has_class("show-panel")
+
+
+async def test_split_mode_horizontal_adds_show_panel_class(log_view):
+    """Setting split_mode to 'horizontal' must add the show-panel CSS class."""
+    log_view.split_mode = "horizontal"
+    await asyncio.sleep(0)
+    assert log_view.has_class("show-panel")
+
+
+async def test_split_mode_horizontal_sets_vertical_layout(log_view):
+    """Horizontal split must switch LogView layout to 'vertical' so panel sits below."""
+    log_view.split_mode = "horizontal"
+    await asyncio.sleep(0)
+    assert log_view.styles.layout.name == "vertical"
+
+
+async def test_split_mode_vertical_keeps_horizontal_layout(log_view):
+    """Vertical split must keep LogView layout as 'horizontal' (side by side)."""
+    log_view.split_mode = "vertical"
+    await asyncio.sleep(0)
+    assert log_view.styles.layout.name == "horizontal"
+
+
+async def test_split_mode_none_resets_layout_to_horizontal(log_view):
+    """Closing panel must reset LogView layout to 'horizontal'."""
+    log_view.split_mode = "horizontal"
+    await asyncio.sleep(0)
+    log_view.split_mode = None
+    await asyncio.sleep(0)
+    assert log_view.styles.layout.name == "horizontal"

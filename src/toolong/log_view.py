@@ -283,7 +283,7 @@ class LogView(Horizontal):
     ]
 
     show_find: reactive[bool] = reactive(False)
-    show_panel: reactive[bool] = reactive(False)
+    split_mode: reactive[str | None] = reactive(None)
     show_line_numbers: reactive[bool] = reactive(False)
     tail: reactive[bool] = reactive(False)
     can_tail: reactive[bool] = reactive(True)
@@ -327,8 +327,22 @@ class LogView(Horizontal):
         else:
             self.query_one(LogLines).focus()
 
-    async def watch_show_panel(self, show_panel: bool) -> None:
-        self.set_class(show_panel, "show-panel")
+    async def watch_split_mode(self, mode: str | None) -> None:
+        if mode is None:
+            self.set_class(False, "show-panel")
+            self.styles.layout = "horizontal"
+        elif mode == "horizontal":
+            panel = self.query_one(LinePanel)
+            panel.styles.width = "100%"
+            panel.styles.height = "50%"
+            self.styles.layout = "vertical"
+            self.set_class(True, "show-panel")
+        elif mode == "vertical":
+            panel = self.query_one(LinePanel)
+            panel.styles.width = "50%"
+            panel.styles.height = "1fr"
+            self.styles.layout = "horizontal"
+            self.set_class(True, "show-panel")
         await self.update_panel()
 
     @on(FindDialog.Dismiss)
@@ -344,14 +358,14 @@ class LogView(Horizontal):
 
     @on(FindDialog.SelectLine)
     def select_line(self) -> None:
-        self.show_panel = not self.show_panel
+        self.split_mode = None if self.split_mode is not None else "vertical"
 
     @on(DismissOverlay)
     def dismiss_overlay(self) -> None:
         if self.show_find:
             self.show_find = False
-        elif self.show_panel:
-            self.show_panel = False
+        elif self.split_mode is not None:
+            self.split_mode = None
         else:
             self.query_one(LogLines).pointer_line = None
 
@@ -361,7 +375,7 @@ class LogView(Horizontal):
         event.stop()
 
     async def update_panel(self) -> None:
-        if not self.show_panel:
+        if self.split_mode is None:
             return
         pointer_line = self.query_one(LogLines).pointer_line
         if pointer_line is not None:
@@ -376,8 +390,8 @@ class LogView(Horizontal):
     @on(PointerMoved)
     async def pointer_moved(self, event: PointerMoved):
         if event.pointer_line is None:
-            self.show_panel = False
-        if self.show_panel:
+            self.split_mode = None
+        if self.split_mode is not None:
             await self.update_panel()
 
         log_lines = self.query_one(LogLines)
