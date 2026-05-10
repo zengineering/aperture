@@ -4,6 +4,7 @@ from toolong.ui import CompareTokens
 from unittest.mock import patch, MagicMock
 from textual.app import ScreenStackError
 from toolong.ui import UI
+from toolong.config.schema import ApertureConfig
 
 
 class TestCompareTokens:
@@ -21,7 +22,7 @@ class TestCompareTokens:
 
 class TestMouseToggle:
     def _make_ui(self) -> UI:
-        with patch("toolong.ui.load_config"):
+        with patch("toolong.ui.load_config", return_value=ApertureConfig()):
             ui = UI(file_paths=[])
         ui._mouse_captured = False
         return ui

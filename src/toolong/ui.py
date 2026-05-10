@@ -152,7 +152,6 @@ class UI(App):
         self.watcher = get_watcher()
         self._mouse_captured = True
         self._config_warning: str | None = None
-        super().__init__()
         try:
             self.aperture_config: ApertureConfig = load_config()
         except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
@@ -161,6 +160,7 @@ class UI(App):
                 f"Config error in ~/.config/aperture/config.toml — using defaults. "
                 f"Delete the file to reset. Detail: {exc}"
             )
+        super().__init__()
 
     def action_toggle_mouse(self) -> None:
         if self._mouse_captured:
@@ -185,6 +185,15 @@ class UI(App):
 
     def action_quit(self) -> None:
         self.exit()
+
+    def get_css_variables(self) -> dict[str, str]:
+        variables = super().get_css_variables()
+        import dataclasses
+        for f in dataclasses.fields(self.aperture_config.theme):
+            value = getattr(self.aperture_config.theme, f.name)
+            if value is not None:
+                variables[f.name.replace("_", "-")] = value
+        return variables
 
     async def on_mount(self) -> None:
         self.ansi_theme_dark = terminal_theme.DIMMED_MONOKAI
