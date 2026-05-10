@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import locale
-import unicodedata
 
 from pathlib import Path
 
@@ -10,23 +9,20 @@ try:
 except ImportError:
     import tomli as tomllib  # type: ignore[no-redef]
 
-from toolong.config import load_config, ApertureConfig
-from toolong.config.schema import KeysConfig
-from toolong.input.bindings import normalize_key as _normalize_key_fn
-
 from rich import terminal_theme
 from textual.app import App, ComposeResult, ScreenStackError
-from textual.keys import KEY_NAME_REPLACEMENTS
 from textual.css.query import NoMatches
-
-from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
 from textual.lazy import Lazy
 from textual.screen import Screen
 from textual.widgets import Static, TabbedContent, TabPane
 
-from toolong.log_view import LogView
-from toolong.watcher import get_watcher
+from toolong.config import load_config, ApertureConfig
+from toolong.config.schema import KeysConfig
 from toolong.help import ApertureHelpScreen
+from toolong.input.bindings import normalize_key as _normalize_key_fn
+from toolong.log_view import LogView
+from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
+from toolong.watcher import get_watcher
 
 
 locale.setlocale(locale.LC_ALL, "")

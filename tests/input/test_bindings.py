@@ -49,7 +49,6 @@ def test_key_constants_have_expected_values():
     assert KEY_QUIT           == "q"
 
 
-import pytest
 from toolong.input.bindings import normalize_key
 
 
