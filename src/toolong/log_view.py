@@ -15,6 +15,7 @@ from textual.widgets import Label
 
 from toolong.find_dialog import FindDialog
 from toolong.input import BIND_NEXT_MATCH, BIND_PREV_MATCH, BIND_SEARCH
+from toolong.input.bindings import normalize_key
 from toolong.line_panel import LinePanel
 from toolong.log_lines import LogLines
 from toolong.messages import (
@@ -311,6 +312,15 @@ class LogView(Horizontal):
         yield InfoOverlay().data_bind(LogView.tail)
         yield LogFooter().data_bind(LogView.tail, LogView.can_tail)
 
+    def on_mount(self) -> None:
+        config = getattr(self.app, "aperture_config", None)
+        if config is None:
+            return
+        keys = config.keys
+        self._bindings.bind(normalize_key(keys.horizontal_split), "open_horizontal", show=False)
+        self._bindings.bind(normalize_key(keys.vertical_split), "open_vertical", show=False)
+        self._bindings.bind(normalize_key(keys.floating_split), "open_floating", show=False)
+
     @on(FindDialog.Update)
     def filter_dialog_update(self, event: FindDialog.Update) -> None:
         log_lines = self.query_one(LogLines)
@@ -359,7 +369,9 @@ class LogView(Horizontal):
 
     @on(FindDialog.SelectLine)
     def select_line(self) -> None:
-        self.split_mode = None if self.split_mode is not None else "vertical"
+        config = getattr(self.app, "aperture_config", None)
+        default_mode = config.panes.default_split if config is not None else "horizontal"
+        self.open_pane(default_mode)
 
     @on(DismissOverlay)
     def dismiss_overlay(self) -> None:

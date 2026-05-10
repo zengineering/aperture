@@ -189,3 +189,63 @@ async def test_action_open_floating_delegates(log_view_with_pilot):
     with patch.object(view, "open_pane") as mock_open:
         view.action_open_floating()
         mock_open.assert_called_once_with("floating")
+
+
+async def test_s_key_calls_open_pane_horizontal(log_view_with_pilot):
+    """Pressing 's' must trigger open_pane('horizontal')."""
+    view, pilot, app = log_view_with_pilot
+    view.query_one(LogLines).pointer_line = 0
+    with patch.object(view, "open_pane") as mock_open:
+        await pilot.press("s")
+        await pilot.pause()
+        mock_open.assert_any_call("horizontal")
+
+
+async def test_v_key_calls_open_pane_vertical(log_view_with_pilot):
+    """Pressing 'v' must trigger open_pane('vertical')."""
+    view, pilot, app = log_view_with_pilot
+    view.query_one(LogLines).pointer_line = 0
+    with patch.object(view, "open_pane") as mock_open:
+        await pilot.press("v")
+        await pilot.pause()
+        mock_open.assert_any_call("vertical")
+
+
+async def test_f_key_calls_open_pane_floating(log_view_with_pilot):
+    """Pressing 'f' must trigger open_pane('floating')."""
+    view, pilot, app = log_view_with_pilot
+    view.query_one(LogLines).pointer_line = 0
+    with patch.object(view, "open_pane") as mock_open:
+        await pilot.press("f")
+        await pilot.pause()
+        mock_open.assert_any_call("floating")
+
+
+async def test_select_line_uses_default_split(log_view_with_pilot):
+    """FindDialog.SelectLine must open the pane using PanesConfig.default_split."""
+    from toolong.find_dialog import FindDialog
+    view, pilot, app = log_view_with_pilot
+    view.query_one(LogLines).pointer_line = 0
+    with patch.object(view, "open_pane") as mock_open:
+        view.post_message(FindDialog.SelectLine())
+        await pilot.pause()
+        default = app.aperture_config.panes.default_split
+        mock_open.assert_called_once_with(default)
+
+
+async def test_select_line_uses_configured_default_split(tmp_path):
+    """When default_split is 'vertical', select_line must open vertical."""
+    from toolong.find_dialog import FindDialog
+    log_file = tmp_path / "test.log"
+    log_file.write_text("line one\nline two\n", encoding="utf-8")
+    app = UI(file_paths=[str(log_file)])
+    app.aperture_config.panes.default_split = "vertical"
+    async with app.run_test(headless=True) as pilot:
+        await pilot.pause()
+        await pilot.pause(0.1)
+        view = app.screen.query_one(LogView)
+        view.query_one(LogLines).pointer_line = 0
+        with patch.object(view, "open_pane") as mock_open:
+            view.post_message(FindDialog.SelectLine())
+            await pilot.pause()
+            mock_open.assert_called_once_with("vertical")
