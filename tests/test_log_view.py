@@ -103,3 +103,89 @@ async def test_split_mode_none_resets_layout_to_horizontal(log_view):
     log_view.split_mode = None
     await asyncio.sleep(0)
     assert log_view.styles.layout.name == "horizontal"
+
+
+@pytest.fixture
+async def log_view_with_pilot(tmp_path):
+    log_file = tmp_path / "test.log"
+    log_file.write_text("line one\nline two\nline three\n", encoding="utf-8")
+    app = UI(file_paths=[str(log_file)])
+    async with app.run_test(headless=True) as pilot:
+        await pilot.pause()
+        await pilot.pause(0.1)
+        view = app.screen.query_one(LogView)
+        yield view, pilot, app
+
+
+async def test_open_pane_vertical_sets_split_mode(log_view_with_pilot):
+    """open_pane('vertical') must set split_mode to 'vertical'."""
+    view, pilot, app = log_view_with_pilot
+    view.open_pane("vertical")
+    assert view.split_mode == "vertical"
+
+
+async def test_open_pane_horizontal_sets_split_mode(log_view_with_pilot):
+    """open_pane('horizontal') must set split_mode to 'horizontal'."""
+    view, pilot, app = log_view_with_pilot
+    view.open_pane("horizontal")
+    assert view.split_mode == "horizontal"
+
+
+async def test_open_pane_same_mode_toggles_closed(log_view_with_pilot):
+    """Calling open_pane with the already-active mode must close the panel."""
+    view, pilot, app = log_view_with_pilot
+    view.open_pane("vertical")
+    view.open_pane("vertical")
+    assert view.split_mode is None
+
+
+async def test_open_pane_different_mode_switches(log_view_with_pilot):
+    """Calling open_pane with a different mode must switch without closing first."""
+    view, pilot, app = log_view_with_pilot
+    view.open_pane("vertical")
+    view.open_pane("horizontal")
+    assert view.split_mode == "horizontal"
+
+
+async def test_open_pane_sets_pointer_if_none(log_view_with_pilot):
+    """open_pane must set pointer_line to scroll position when pointer is unset."""
+    view, pilot, app = log_view_with_pilot
+    log_lines = view.query_one(LogLines)
+    log_lines.pointer_line = None
+    view.open_pane("vertical")
+    assert log_lines.pointer_line is not None
+
+
+async def test_open_pane_floating_pushes_screen(log_view_with_pilot):
+    """open_pane('floating') must push a FloatingPane onto the screen stack."""
+    from toolong.panes import FloatingPane
+    view, pilot, app = log_view_with_pilot
+    log_lines = view.query_one(LogLines)
+    log_lines.pointer_line = 0
+    view.open_pane("floating")
+    await pilot.pause()
+    assert isinstance(app.screen, FloatingPane)
+
+
+async def test_action_open_horizontal_delegates(log_view_with_pilot):
+    """action_open_horizontal must call open_pane('horizontal')."""
+    view, pilot, app = log_view_with_pilot
+    with patch.object(view, "open_pane") as mock_open:
+        view.action_open_horizontal()
+        mock_open.assert_called_once_with("horizontal")
+
+
+async def test_action_open_vertical_delegates(log_view_with_pilot):
+    """action_open_vertical must call open_pane('vertical')."""
+    view, pilot, app = log_view_with_pilot
+    with patch.object(view, "open_pane") as mock_open:
+        view.action_open_vertical()
+        mock_open.assert_called_once_with("vertical")
+
+
+async def test_action_open_floating_delegates(log_view_with_pilot):
+    """action_open_floating must call open_pane('floating')."""
+    view, pilot, app = log_view_with_pilot
+    with patch.object(view, "open_pane") as mock_open:
+        view.action_open_floating()
+        mock_open.assert_called_once_with("floating")

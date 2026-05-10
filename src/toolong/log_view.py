@@ -26,6 +26,7 @@ from toolong.messages import (
     ScanProgress,
     TailFile,
 )
+from toolong.panes import FloatingPane
 from toolong.scan_progress_bar import ScanProgressBar
 from toolong.watcher import WatcherBase
 
@@ -468,3 +469,35 @@ class LogView(Horizontal):
 
     def action_prev_match(self) -> None:
         self.query_one(LogLines).advance_search(-1)
+
+    def open_pane(self, mode: str) -> None:
+        """Open the detail pane in the given split mode, or close it if already open in that mode."""
+        log_lines = self.query_one(LogLines)
+        if log_lines.pointer_line is None:
+            log_lines.pointer_line = log_lines.scroll_offset.y
+
+        if mode == "floating":
+            pointer_line = log_lines.pointer_line
+            if pointer_line is not None:
+                line, text, timestamp = log_lines.get_text(
+                    pointer_line,
+                    block=True,
+                    abbreviate=True,
+                    max_line_length=MAX_DETAIL_LINE_LENGTH,
+                )
+                self.app.push_screen(FloatingPane(line, text, timestamp))
+            return
+
+        if self.split_mode == mode:
+            self.split_mode = None
+        else:
+            self.split_mode = mode
+
+    def action_open_horizontal(self) -> None:
+        self.open_pane("horizontal")
+
+    def action_open_vertical(self) -> None:
+        self.open_pane("vertical")
+
+    def action_open_floating(self) -> None:
+        self.open_pane("floating")
