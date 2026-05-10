@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from toolong.input.bindings import (
     KEY_SCROLL_DOWN, BIND_SCROLL_DOWN,
     KEY_SCROLL_UP, BIND_SCROLL_UP,
@@ -9,6 +11,8 @@ from toolong.input.bindings import (
     KEY_MOUSE_TOGGLE, BIND_MOUSE_TOGGLE,
     KEY_HELP, BIND_HELP,
     KEY_QUIT, BIND_QUIT,
+    BINDING_GROUPS,
+    BindingEntry,
 )
 
 __all__ = [
@@ -22,4 +26,6 @@ __all__ = [
     "KEY_MOUSE_TOGGLE", "BIND_MOUSE_TOGGLE",
     "KEY_HELP", "BIND_HELP",
     "KEY_QUIT", "BIND_QUIT",
+    "BINDING_GROUPS",
+    "BindingEntry",
 ]

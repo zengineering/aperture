@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from textual.binding import Binding
 
 # Navigation
@@ -30,3 +32,46 @@ KEY_QUIT         = "q"
 BIND_MOUSE_TOGGLE = Binding(KEY_MOUSE_TOGGLE, "toggle_mouse", "Mouse", show=False)
 BIND_HELP         = Binding(KEY_HELP,         "help",         "Help")
 BIND_QUIT         = Binding(KEY_QUIT,         "quit",         "Quit")
+
+
+@dataclass(frozen=True)
+class BindingEntry:
+    """Maps a human-readable label to a KeysConfig field name."""
+    label: str
+    field: str
+
+    def __post_init__(self) -> None:
+        import dataclasses
+        from toolong.config.schema import KeysConfig
+        valid = {f.name for f in dataclasses.fields(KeysConfig)}
+        if self.field not in valid:
+            raise ValueError(
+                f"{self.field!r} is not a field on KeysConfig. "
+                f"Valid fields: {sorted(valid)}"
+            )
+
+
+BINDING_GROUPS: list[tuple[str, list[BindingEntry]]] = [
+    ("Navigation", [
+        BindingEntry("Scroll down",     "scroll_down"),
+        BindingEntry("Scroll up",       "scroll_up"),
+        BindingEntry("Jump to top",     "jump_to_top"),
+        BindingEntry("Jump to bottom",  "jump_to_bottom"),
+    ]),
+    ("Search", [
+        BindingEntry("Open search",     "search"),
+        BindingEntry("Next match",      "next_match"),
+        BindingEntry("Previous match",  "prev_match"),
+    ]),
+    ("Panes", [
+        BindingEntry("Open detail pane",    "open_pane"),
+        BindingEntry("Horizontal split",    "horizontal_split"),
+        BindingEntry("Vertical split",      "vertical_split"),
+        BindingEntry("Floating modal",      "floating_split"),
+    ]),
+    ("General", [
+        BindingEntry("Toggle mouse capture", "mouse_toggle"),
+        BindingEntry("Show this help",       "help"),
+        BindingEntry("Quit",                 "quit"),
+    ]),
+]

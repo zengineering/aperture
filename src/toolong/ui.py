@@ -1,13 +1,21 @@
 from __future__ import annotations
 
 import locale
+import unicodedata
 
 from pathlib import Path
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # type: ignore[no-redef]
+
 from toolong.config import load_config, ApertureConfig
+from toolong.config.schema import KeysConfig
 
 from rich import terminal_theme
 from textual.app import App, ComposeResult, ScreenStackError
+from textual.keys import KEY_NAME_REPLACEMENTS
 from textual.css.query import NoMatches
 
 from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
@@ -17,8 +25,7 @@ from textual.widgets import Static, TabbedContent, TabPane
 
 from toolong.log_view import LogView
 from toolong.watcher import get_watcher
-from toolong.help import HelpScreen
-from toolong.input import BIND_HELP, BIND_QUIT, BIND_MOUSE_TOGGLE
+from toolong.help import ApertureHelpScreen
 
 
 locale.setlocale(locale.LC_ALL, "")
@@ -26,11 +33,11 @@ locale.setlocale(locale.LC_ALL, "")
 
 class LogScreen(Screen):
 
-    BINDINGS = [
-        BIND_HELP,
-        BIND_QUIT,
-        BIND_MOUSE_TOGGLE,
-    ]
+    BINDINGS: list = []
+
+    def __init__(self, keys: KeysConfig) -> None:
+        super().__init__()
+        self._keys = keys
 
     CSS = """
     LogScreen {
@@ -82,7 +89,32 @@ class LogScreen(Screen):
                             )
                         )
 
+    @staticmethod
+    def _normalize_key(key: str) -> str:
+        """Normalize a single-character key to the name Textual expects in bindings.
+
+        Replicates the logic of textual.keys._character_to_key using only public
+        APIs (KEY_NAME_REPLACEMENTS and unicodedata) because _Bindings.bind() does
+        NOT normalize keys internally — it stores whatever string is passed verbatim.
+        """
+        if len(key) != 1:
+            return key
+        if not key.isalnum():
+            try:
+                name = unicodedata.name(key).lower().replace("-", "_").replace(" ", "_")
+            except ValueError:
+                raise ValueError(
+                    f"{key!r} is not a valid bindable character. "
+                    f"Check your ~/.config/aperture/config.toml."
+                )
+        else:
+            name = key
+        return KEY_NAME_REPLACEMENTS.get(name, name)
+
     def on_mount(self) -> None:
+        self._bindings.bind(self._normalize_key(self._keys.help), "help", description="Help")
+        self._bindings.bind(self._normalize_key(self._keys.quit), "quit", description="Quit")
+        self._bindings.bind(self._normalize_key(self._keys.mouse_toggle), "toggle_mouse", description="Mouse", show=False)
         assert isinstance(self.app, UI)
         self.query("TabbedContent Tabs").set(display=len(self.query(TabPane)) > 1)
         active_pane = self.query_one(TabbedContent).active_pane
@@ -90,7 +122,7 @@ class LogScreen(Screen):
             active_pane.query("LogView > LogLines").focus()
 
     def action_help(self) -> None:
-        self.app.push_screen(HelpScreen())
+        self.app.push_screen(ApertureHelpScreen(self.app.aperture_config.keys))
 
 
 from functools import total_ordering
@@ -107,6 +139,8 @@ class CompareTokens:
         ]
 
     def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CompareTokens):
+            return NotImplemented
         return self.tokens == other.tokens
 
     def __lt__(self, other: CompareTokens) -> bool:
@@ -141,7 +175,7 @@ class UI(App):
         super().__init__()
         try:
             self.aperture_config: ApertureConfig = load_config()
-        except (OSError, ValueError, TypeError) as exc:
+        except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
             self.aperture_config = ApertureConfig()
             self._config_warning = (
                 f"Config error in ~/.config/aperture/config.toml — using defaults. "
@@ -155,9 +189,9 @@ class UI(App):
         else:
             try:
                 self.capture_mouse(self.focused or self.screen)
+                self._mouse_captured = True
             except ScreenStackError:
-                pass  # No screen mounted yet; mouse state updated but capture skipped
-            self._mouse_captured = True
+                pass  # No screen mounted yet; state unchanged
         try:
             if isinstance(self.screen, LogScreen):
                 try:
@@ -176,7 +210,7 @@ class UI(App):
         self.ansi_theme_dark = terminal_theme.DIMMED_MONOKAI
         self.ansi_theme_light = GRUVBOX_LIGHT_ANSI
         self.console.push_theme(GRUVBOX_LIGHT_SYNTAX)
-        await self.push_screen(LogScreen())
+        await self.push_screen(LogScreen(self.aperture_config.keys))
         self.screen.query("LogLines").focus()
         if self._config_warning:
             self.notify(self._config_warning, severity="warning", timeout=8)

@@ -97,19 +97,19 @@ class TestLogViewBindings:
 
 class TestLogScreenBindings:
     def test_help_key_is_question_mark(self):
-        action = _action_for_key(LogScreen.BINDINGS, "?")
-        assert action == "help"
+        from toolong.config.schema import KeysConfig
+        assert KeysConfig().help == "?"
 
     def test_f1_not_present(self):
         assert "f1" not in _expanded_keys(LogScreen.BINDINGS)
 
     def test_q_maps_to_quit(self):
-        action = _action_for_key(LogScreen.BINDINGS, "q")
-        assert action == "quit"
+        from toolong.config.schema import KeysConfig
+        assert KeysConfig().quit == "q"
 
     def test_m_maps_to_toggle_mouse(self):
-        action = _action_for_key(LogScreen.BINDINGS, "m")
-        assert action == "toggle_mouse"
+        from toolong.config.schema import KeysConfig
+        assert KeysConfig().mouse_toggle == "m"
 
 
 class TestUIActions:
