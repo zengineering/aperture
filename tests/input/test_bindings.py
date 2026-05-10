@@ -1,4 +1,5 @@
 import pytest
+from toolong.input.bindings import normalize_key
 from toolong.input import (
     KEY_SCROLL_DOWN, BIND_SCROLL_DOWN,
     KEY_SCROLL_UP, BIND_SCROLL_UP,
@@ -47,9 +48,6 @@ def test_key_constants_have_expected_values():
     assert KEY_MOUSE_TOGGLE   == "m"
     assert KEY_HELP           == "?"
     assert KEY_QUIT           == "q"
-
-
-from toolong.input.bindings import normalize_key
 
 
 def test_normalize_key_alphanumeric_passthrough():
