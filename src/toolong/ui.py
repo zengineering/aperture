@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import locale
-import unicodedata
 
 from pathlib import Path
 
@@ -10,22 +9,20 @@ try:
 except ImportError:
     import tomli as tomllib  # type: ignore[no-redef]
 
-from toolong.config import load_config, ApertureConfig
-from toolong.config.schema import KeysConfig
-
 from rich import terminal_theme
 from textual.app import App, ComposeResult, ScreenStackError
-from textual.keys import KEY_NAME_REPLACEMENTS
 from textual.css.query import NoMatches
-
-from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
 from textual.lazy import Lazy
 from textual.screen import Screen
 from textual.widgets import Static, TabbedContent, TabPane
 
-from toolong.log_view import LogView
-from toolong.watcher import get_watcher
+from toolong.config import load_config, ApertureConfig
+from toolong.config.schema import KeysConfig
 from toolong.help import ApertureHelpScreen
+from toolong.input.bindings import normalize_key as _normalize_key_fn
+from toolong.log_view import LogView
+from toolong.theme import GRUVBOX_LIGHT_ANSI, GRUVBOX_LIGHT_SYNTAX
+from toolong.watcher import get_watcher
 
 
 locale.setlocale(locale.LC_ALL, "")
@@ -91,25 +88,8 @@ class LogScreen(Screen):
 
     @staticmethod
     def _normalize_key(key: str) -> str:
-        """Normalize a single-character key to the name Textual expects in bindings.
-
-        Replicates the logic of textual.keys._character_to_key using only public
-        APIs (KEY_NAME_REPLACEMENTS and unicodedata) because _Bindings.bind() does
-        NOT normalize keys internally — it stores whatever string is passed verbatim.
-        """
-        if len(key) != 1:
-            return key
-        if not key.isalnum():
-            try:
-                name = unicodedata.name(key).lower().replace("-", "_").replace(" ", "_")
-            except ValueError:
-                raise ValueError(
-                    f"{key!r} is not a valid bindable character. "
-                    f"Check your ~/.config/aperture/config.toml."
-                )
-        else:
-            name = key
-        return KEY_NAME_REPLACEMENTS.get(name, name)
+        """Normalize a single-character key to the name Textual expects in bindings."""
+        return _normalize_key_fn(key)
 
     def on_mount(self) -> None:
         self._bindings.bind(self._normalize_key(self._keys.help), "help", description="Help")

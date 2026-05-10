@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import unicodedata
 from dataclasses import dataclass
 
 from textual.binding import Binding
+from textual.keys import KEY_NAME_REPLACEMENTS
 
 # Navigation
 KEY_SCROLL_DOWN    = "j"
@@ -32,6 +34,27 @@ KEY_QUIT         = "q"
 BIND_MOUSE_TOGGLE = Binding(KEY_MOUSE_TOGGLE, "toggle_mouse", "Mouse", show=False)
 BIND_HELP         = Binding(KEY_HELP,         "help",         "Help")
 BIND_QUIT         = Binding(KEY_QUIT,         "quit",         "Quit")
+
+
+def normalize_key(key: str) -> str:
+    """Normalize a single-character key to the name Textual expects in bindings.
+
+    Replicates the logic of textual.keys._character_to_key using only public
+    APIs (KEY_NAME_REPLACEMENTS and unicodedata).
+    """
+    if len(key) != 1:
+        return key
+    if not key.isalnum():
+        try:
+            name = unicodedata.name(key).lower().replace("-", "_").replace(" ", "_")
+        except ValueError:
+            raise ValueError(
+                f"{key!r} is not a valid bindable character. "
+                f"Check your ~/.config/aperture/config.toml."
+            )
+    else:
+        name = key
+    return KEY_NAME_REPLACEMENTS.get(name, name)
 
 
 @dataclass(frozen=True)

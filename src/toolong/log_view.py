@@ -15,6 +15,7 @@ from textual.widgets import Label
 
 from toolong.find_dialog import FindDialog
 from toolong.input import BIND_NEXT_MATCH, BIND_PREV_MATCH, BIND_SEARCH
+from toolong.input.bindings import normalize_key
 from toolong.line_panel import LinePanel
 from toolong.log_lines import LogLines
 from toolong.messages import (
@@ -26,6 +27,7 @@ from toolong.messages import (
     ScanProgress,
     TailFile,
 )
+from toolong.panes import FloatingPane
 from toolong.scan_progress_bar import ScanProgressBar
 from toolong.watcher import WatcherBase
 
@@ -283,7 +285,7 @@ class LogView(Horizontal):
     ]
 
     show_find: reactive[bool] = reactive(False)
-    show_panel: reactive[bool] = reactive(False)
+    split_mode: reactive[str | None] = reactive(None)
     show_line_numbers: reactive[bool] = reactive(False)
     tail: reactive[bool] = reactive(False)
     can_tail: reactive[bool] = reactive(True)
@@ -310,6 +312,18 @@ class LogView(Horizontal):
         yield InfoOverlay().data_bind(LogView.tail)
         yield LogFooter().data_bind(LogView.tail, LogView.can_tail)
 
+    def on_mount(self) -> None:
+        config = getattr(self.app, "aperture_config", None)
+        if config is None:
+            return
+        keys = config.keys
+        try:
+            self._bindings.bind(normalize_key(keys.horizontal_split), "open_horizontal", show=False)
+            self._bindings.bind(normalize_key(keys.vertical_split), "open_vertical", show=False)
+            self._bindings.bind(normalize_key(keys.floating_split), "open_floating", show=False)
+        except ValueError as exc:
+            self.notify(str(exc), title="Invalid key binding", severity="error")
+
     @on(FindDialog.Update)
     def filter_dialog_update(self, event: FindDialog.Update) -> None:
         log_lines = self.query_one(LogLines)
@@ -327,8 +341,22 @@ class LogView(Horizontal):
         else:
             self.query_one(LogLines).focus()
 
-    async def watch_show_panel(self, show_panel: bool) -> None:
-        self.set_class(show_panel, "show-panel")
+    async def watch_split_mode(self, mode: str | None) -> None:
+        if mode is None:
+            self.set_class(False, "show-panel")
+            self.styles.layout = "horizontal"
+        elif mode == "horizontal":
+            panel = self.query_one(LinePanel)
+            panel.styles.width = "100%"
+            panel.styles.height = "50%"
+            self.styles.layout = "vertical"
+            self.set_class(True, "show-panel")
+        elif mode == "vertical":
+            panel = self.query_one(LinePanel)
+            panel.styles.width = "50%"
+            panel.styles.height = "1fr"
+            self.styles.layout = "horizontal"
+            self.set_class(True, "show-panel")
         await self.update_panel()
 
     @on(FindDialog.Dismiss)
@@ -344,14 +372,16 @@ class LogView(Horizontal):
 
     @on(FindDialog.SelectLine)
     def select_line(self) -> None:
-        self.show_panel = not self.show_panel
+        config = getattr(self.app, "aperture_config", None)
+        default_mode = config.panes.default_split if config is not None else "horizontal"
+        self.open_pane(default_mode)
 
     @on(DismissOverlay)
     def dismiss_overlay(self) -> None:
         if self.show_find:
             self.show_find = False
-        elif self.show_panel:
-            self.show_panel = False
+        elif self.split_mode is not None:
+            self.split_mode = None
         else:
             self.query_one(LogLines).pointer_line = None
 
@@ -361,7 +391,7 @@ class LogView(Horizontal):
         event.stop()
 
     async def update_panel(self) -> None:
-        if not self.show_panel:
+        if self.split_mode is None:
             return
         pointer_line = self.query_one(LogLines).pointer_line
         if pointer_line is not None:
@@ -376,8 +406,8 @@ class LogView(Horizontal):
     @on(PointerMoved)
     async def pointer_moved(self, event: PointerMoved):
         if event.pointer_line is None:
-            self.show_panel = False
-        if self.show_panel:
+            self.split_mode = None
+        if self.split_mode is not None:
             await self.update_panel()
 
         log_lines = self.query_one(LogLines)
@@ -454,3 +484,35 @@ class LogView(Horizontal):
 
     def action_prev_match(self) -> None:
         self.query_one(LogLines).advance_search(-1)
+
+    def open_pane(self, mode: str) -> None:
+        """Open the detail pane in the given split mode, or close it if already open in that mode."""
+        log_lines = self.query_one(LogLines)
+        if log_lines.pointer_line is None:
+            log_lines.pointer_line = log_lines.scroll_offset.y
+
+        if mode == "floating":
+            pointer_line = log_lines.pointer_line
+            if pointer_line is not None:
+                line, text, timestamp = log_lines.get_text(
+                    pointer_line,
+                    block=True,
+                    abbreviate=True,
+                    max_line_length=MAX_DETAIL_LINE_LENGTH,
+                )
+                self.app.push_screen(FloatingPane(line, text, timestamp))
+            return
+
+        if self.split_mode == mode:
+            self.split_mode = None
+        else:
+            self.split_mode = mode
+
+    def action_open_horizontal(self) -> None:
+        self.open_pane("horizontal")
+
+    def action_open_vertical(self) -> None:
+        self.open_pane("vertical")
+
+    def action_open_floating(self) -> None:
+        self.open_pane("floating")

@@ -1,4 +1,5 @@
 import pytest
+from toolong.input.bindings import normalize_key
 from toolong.input import (
     KEY_SCROLL_DOWN, BIND_SCROLL_DOWN,
     KEY_SCROLL_UP, BIND_SCROLL_UP,
@@ -47,3 +48,28 @@ def test_key_constants_have_expected_values():
     assert KEY_MOUSE_TOGGLE   == "m"
     assert KEY_HELP           == "?"
     assert KEY_QUIT           == "q"
+
+
+def test_normalize_key_alphanumeric_passthrough():
+    assert normalize_key("j") == "j"
+    assert normalize_key("G") == "G"
+    assert normalize_key("s") == "s"
+
+
+def test_normalize_key_slash_becomes_slash():
+    assert normalize_key("/") == "slash"
+
+
+def test_normalize_key_question_mark():
+    assert normalize_key("?") == "question_mark"
+
+
+def test_normalize_key_multichar_passthrough():
+    assert normalize_key("enter") == "enter"
+    assert normalize_key("escape") == "escape"
+    assert normalize_key("ctrl+t") == "ctrl+t"
+
+
+def test_normalize_key_control_char_raises():
+    with pytest.raises(ValueError, match="not a valid bindable character"):
+        normalize_key("\x00")

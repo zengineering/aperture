@@ -49,3 +49,222 @@ async def test_next_and_prev_match_use_opposite_signs(log_view):
     assert calls[0] == 1, f"next_match should pass +1, got {calls[0]}"
     assert calls[1] == -1, f"prev_match should pass -1, got {calls[1]}"
     assert calls[0] != calls[1], "next and prev must use different signs"
+
+
+import asyncio
+
+
+async def test_split_mode_starts_as_none(log_view):
+    """split_mode must be None on mount (panel hidden)."""
+    assert log_view.split_mode is None
+
+
+async def test_split_mode_none_removes_show_panel_class(log_view):
+    """Setting split_mode to None must remove the show-panel CSS class."""
+    log_view.split_mode = "vertical"
+    await asyncio.sleep(0)
+    log_view.split_mode = None
+    await asyncio.sleep(0)
+    assert not log_view.has_class("show-panel")
+
+
+async def test_split_mode_vertical_adds_show_panel_class(log_view):
+    """Setting split_mode to 'vertical' must add the show-panel CSS class."""
+    log_view.split_mode = "vertical"
+    await asyncio.sleep(0)
+    assert log_view.has_class("show-panel")
+
+
+async def test_split_mode_horizontal_adds_show_panel_class(log_view):
+    """Setting split_mode to 'horizontal' must add the show-panel CSS class."""
+    log_view.split_mode = "horizontal"
+    await asyncio.sleep(0)
+    assert log_view.has_class("show-panel")
+
+
+async def test_split_mode_horizontal_sets_vertical_layout(log_view):
+    """Horizontal split must switch LogView layout to 'vertical' so panel sits below."""
+    log_view.split_mode = "horizontal"
+    await asyncio.sleep(0)
+    assert log_view.styles.layout.name == "vertical"
+
+
+async def test_split_mode_vertical_keeps_horizontal_layout(log_view):
+    """Vertical split must keep LogView layout as 'horizontal' (side by side)."""
+    log_view.split_mode = "vertical"
+    await asyncio.sleep(0)
+    assert log_view.styles.layout.name == "horizontal"
+
+
+async def test_split_mode_none_resets_layout_to_horizontal(log_view):
+    """Closing panel must reset LogView layout to 'horizontal'."""
+    log_view.split_mode = "horizontal"
+    await asyncio.sleep(0)
+    log_view.split_mode = None
+    await asyncio.sleep(0)
+    assert log_view.styles.layout.name == "horizontal"
+
+
+@pytest.fixture
+async def log_view_with_pilot(tmp_path):
+    log_file = tmp_path / "test.log"
+    log_file.write_text("line one\nline two\nline three\n", encoding="utf-8")
+    app = UI(file_paths=[str(log_file)])
+    async with app.run_test(headless=True) as pilot:
+        await pilot.pause()
+        await pilot.pause(0.1)
+        view = app.screen.query_one(LogView)
+        yield view, pilot, app
+
+
+async def test_open_pane_vertical_sets_split_mode(log_view_with_pilot):
+    """open_pane('vertical') must set split_mode to 'vertical'."""
+    view, pilot, app = log_view_with_pilot
+    view.open_pane("vertical")
+    assert view.split_mode == "vertical"
+
+
+async def test_open_pane_horizontal_sets_split_mode(log_view_with_pilot):
+    """open_pane('horizontal') must set split_mode to 'horizontal'."""
+    view, pilot, app = log_view_with_pilot
+    view.open_pane("horizontal")
+    assert view.split_mode == "horizontal"
+
+
+async def test_open_pane_same_mode_toggles_closed(log_view_with_pilot):
+    """Calling open_pane with the already-active mode must close the panel."""
+    view, pilot, app = log_view_with_pilot
+    view.open_pane("vertical")
+    view.open_pane("vertical")
+    assert view.split_mode is None
+
+
+async def test_open_pane_different_mode_switches(log_view_with_pilot):
+    """Calling open_pane with a different mode must switch without closing first."""
+    view, pilot, app = log_view_with_pilot
+    view.open_pane("vertical")
+    view.open_pane("horizontal")
+    assert view.split_mode == "horizontal"
+
+
+async def test_open_pane_sets_pointer_if_none(log_view_with_pilot):
+    """open_pane must set pointer_line to scroll position when pointer is unset."""
+    view, pilot, app = log_view_with_pilot
+    log_lines = view.query_one(LogLines)
+    log_lines.pointer_line = None
+    view.open_pane("vertical")
+    assert log_lines.pointer_line is not None
+
+
+async def test_open_pane_floating_pushes_screen(log_view_with_pilot):
+    """open_pane('floating') must push a FloatingPane onto the screen stack."""
+    from toolong.panes import FloatingPane
+    view, pilot, app = log_view_with_pilot
+    log_lines = view.query_one(LogLines)
+    log_lines.pointer_line = 0
+    view.open_pane("floating")
+    await pilot.pause()
+    assert isinstance(app.screen, FloatingPane)
+
+
+async def test_action_open_horizontal_delegates(log_view_with_pilot):
+    """action_open_horizontal must call open_pane('horizontal')."""
+    view, pilot, app = log_view_with_pilot
+    with patch.object(view, "open_pane") as mock_open:
+        view.action_open_horizontal()
+        mock_open.assert_called_once_with("horizontal")
+
+
+async def test_action_open_vertical_delegates(log_view_with_pilot):
+    """action_open_vertical must call open_pane('vertical')."""
+    view, pilot, app = log_view_with_pilot
+    with patch.object(view, "open_pane") as mock_open:
+        view.action_open_vertical()
+        mock_open.assert_called_once_with("vertical")
+
+
+async def test_action_open_floating_delegates(log_view_with_pilot):
+    """action_open_floating must call open_pane('floating')."""
+    view, pilot, app = log_view_with_pilot
+    with patch.object(view, "open_pane") as mock_open:
+        view.action_open_floating()
+        mock_open.assert_called_once_with("floating")
+
+
+async def test_s_key_calls_open_pane_horizontal(log_view_with_pilot):
+    """Pressing 's' must trigger open_pane('horizontal')."""
+    view, pilot, app = log_view_with_pilot
+    view.query_one(LogLines).pointer_line = 0
+    with patch.object(view, "open_pane") as mock_open:
+        await pilot.press("s")
+        await pilot.pause()
+        mock_open.assert_any_call("horizontal")
+
+
+async def test_v_key_calls_open_pane_vertical(log_view_with_pilot):
+    """Pressing 'v' must trigger open_pane('vertical')."""
+    view, pilot, app = log_view_with_pilot
+    view.query_one(LogLines).pointer_line = 0
+    with patch.object(view, "open_pane") as mock_open:
+        await pilot.press("v")
+        await pilot.pause()
+        mock_open.assert_any_call("vertical")
+
+
+async def test_f_key_calls_open_pane_floating(log_view_with_pilot):
+    """Pressing 'f' must trigger open_pane('floating')."""
+    view, pilot, app = log_view_with_pilot
+    view.query_one(LogLines).pointer_line = 0
+    with patch.object(view, "open_pane") as mock_open:
+        await pilot.press("f")
+        await pilot.pause()
+        mock_open.assert_any_call("floating")
+
+
+async def test_select_line_uses_default_split(log_view_with_pilot):
+    """FindDialog.SelectLine must open the pane using PanesConfig.default_split."""
+    from toolong.find_dialog import FindDialog
+    view, pilot, app = log_view_with_pilot
+    view.query_one(LogLines).pointer_line = 0
+    with patch.object(view, "open_pane") as mock_open:
+        view.post_message(FindDialog.SelectLine())
+        await pilot.pause()
+        default = app.aperture_config.panes.default_split
+        mock_open.assert_called_once_with(default)
+
+
+async def test_select_line_uses_configured_default_split(tmp_path):
+    """When default_split is 'vertical', select_line must open vertical."""
+    from toolong.find_dialog import FindDialog
+    log_file = tmp_path / "test.log"
+    log_file.write_text("line one\nline two\n", encoding="utf-8")
+    app = UI(file_paths=[str(log_file)])
+    app.aperture_config.panes.default_split = "vertical"
+    async with app.run_test(headless=True) as pilot:
+        await pilot.pause()
+        await pilot.pause(0.1)
+        view = app.screen.query_one(LogView)
+        view.query_one(LogLines).pointer_line = 0
+        with patch.object(view, "open_pane") as mock_open:
+            view.post_message(FindDialog.SelectLine())
+            await pilot.pause()
+            mock_open.assert_called_once_with("vertical")
+
+
+async def test_on_mount_invalid_split_key_notifies_not_raises(log_view):
+    """If normalize_key raises for a split key, on_mount must notify rather than propagate."""
+    with patch("toolong.log_view.normalize_key", side_effect=ValueError("'\x00' is not a valid bindable character. Check your ~/.config/aperture/config.toml.")):
+        with patch.object(log_view, "notify") as mock_notify:
+            log_view.on_mount()
+            mock_notify.assert_called_once()
+            assert "not a valid bindable character" in mock_notify.call_args[0][0]
+
+
+async def test_on_mount_valid_keys_registers_bindings(log_view):
+    """With valid config keys, on_mount must register all three split bindings."""
+    log_view.on_mount()
+    bound_keys = set(log_view._bindings.keys.keys())
+    # s, v, f are the defaults — they must appear in bindings after mount
+    assert "s" in bound_keys
+    assert "v" in bound_keys
+    assert "f" in bound_keys
