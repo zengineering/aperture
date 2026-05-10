@@ -317,9 +317,12 @@ class LogView(Horizontal):
         if config is None:
             return
         keys = config.keys
-        self._bindings.bind(normalize_key(keys.horizontal_split), "open_horizontal", show=False)
-        self._bindings.bind(normalize_key(keys.vertical_split), "open_vertical", show=False)
-        self._bindings.bind(normalize_key(keys.floating_split), "open_floating", show=False)
+        try:
+            self._bindings.bind(normalize_key(keys.horizontal_split), "open_horizontal", show=False)
+            self._bindings.bind(normalize_key(keys.vertical_split), "open_vertical", show=False)
+            self._bindings.bind(normalize_key(keys.floating_split), "open_floating", show=False)
+        except ValueError as exc:
+            self.notify(str(exc), title="Invalid key binding", severity="error")
 
     @on(FindDialog.Update)
     def filter_dialog_update(self, event: FindDialog.Update) -> None:

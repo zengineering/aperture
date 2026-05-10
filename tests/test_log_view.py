@@ -249,3 +249,22 @@ async def test_select_line_uses_configured_default_split(tmp_path):
             view.post_message(FindDialog.SelectLine())
             await pilot.pause()
             mock_open.assert_called_once_with("vertical")
+
+
+async def test_on_mount_invalid_split_key_notifies_not_raises(log_view):
+    """If normalize_key raises for a split key, on_mount must notify rather than propagate."""
+    with patch("toolong.log_view.normalize_key", side_effect=ValueError("'\x00' is not a valid bindable character. Check your ~/.config/aperture/config.toml.")):
+        with patch.object(log_view, "notify") as mock_notify:
+            log_view.on_mount()
+            mock_notify.assert_called_once()
+            assert "not a valid bindable character" in mock_notify.call_args[0][0]
+
+
+async def test_on_mount_valid_keys_registers_bindings(log_view):
+    """With valid config keys, on_mount must register all three split bindings."""
+    log_view.on_mount()
+    bound_keys = set(log_view._bindings.keys.keys())
+    # s, v, f are the defaults — they must appear in bindings after mount
+    assert "s" in bound_keys
+    assert "v" in bound_keys
+    assert "f" in bound_keys
