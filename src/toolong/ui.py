@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import dataclasses
 import locale
+from functools import total_ordering
 
 from pathlib import Path
 
@@ -105,9 +107,6 @@ class LogScreen(Screen):
         self.app.push_screen(ApertureHelpScreen(self.app.aperture_config.keys))
 
 
-from functools import total_ordering
-
-
 @total_ordering
 class CompareTokens:
     """Compare filenames."""
@@ -160,6 +159,7 @@ class UI(App):
                 f"Config error in ~/.config/aperture/config.toml — using defaults. "
                 f"Delete the file to reset. Detail: {exc}"
             )
+        # super().__init__() triggers get_css_variables(), so aperture_config must be set first.
         super().__init__()
 
     def action_toggle_mouse(self) -> None:
@@ -188,7 +188,6 @@ class UI(App):
 
     def get_css_variables(self) -> dict[str, str]:
         variables = super().get_css_variables()
-        import dataclasses
         for f in dataclasses.fields(self.aperture_config.theme):
             value = getattr(self.aperture_config.theme, f.name)
             if value is not None:
